@@ -52,20 +52,23 @@ public class AddVehicle extends AppCompatActivity {
         Realm.init(this);
         app = new App(new AppConfiguration.Builder(Appid).build());
 
-        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
-            @Override
-            public void onResult(App.Result<User> result) {
-                if(result.isSuccess())
-                {
-                    Log.v("User","Logged In Successfully");
+        app.login(Credentials.anonymous());
 
-                }
-                else
-                {
-                    Log.v("User","Failed to Login");
-                }
-            }
-        });
+        // TODO: Implement Login using user creds.
+//        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
+//            @Override
+//            public void onResult(App.Result<User> result) {
+//                if(result.isSuccess())
+//                {
+//                    Log.v("User","Logged In Successfully");
+//
+//                }
+//                else
+//                {
+//                    Log.v("User","Failed to Login");
+//                }
+//            }
+//        });
 
         User user = app.currentUser();
 

@@ -17,6 +17,9 @@ import com.example.trackerapp.Model.Tracking;
 import com.example.trackerapp.Model.Users;
 
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,14 +31,19 @@ import io.realm.RealmResults;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
 import io.realm.mongodb.Credentials;
+import io.realm.mongodb.RealmResultTask;
 import io.realm.mongodb.User;
 import io.realm.mongodb.mongo.MongoClient;
 import io.realm.mongodb.mongo.MongoCollection;
 import io.realm.mongodb.mongo.MongoDatabase;
 import io.realm.mongodb.mongo.iterable.FindIterable;
+import io.realm.mongodb.mongo.iterable.MongoCursor;
 import io.realm.mongodb.sync.ClientResetRequiredError;
 import io.realm.mongodb.sync.SyncConfiguration;
 import io.realm.mongodb.sync.SyncSession;
+
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class AllVehicleDetails extends AppCompatActivity implements AdapterView.OnItemClickListener {
     String Appid = "application-0-wfzcl";
@@ -68,21 +76,21 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         App app = new App(new AppConfiguration.Builder(Appid)
                 .defaultClientResetHandler(handler)
                 .build());
-
-        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
-            @Override
-            public void onResult(App.Result<User> result) {
-                if(result.isSuccess())
-                {
-                    Log.v("User","Logged In Successfully");
-
-                }
-                else
-                {
-                    Log.v("User","Failed to Login");
-                }
-            }
-        });
+        app.login(Credentials.anonymous());
+//        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
+//            @Override
+//            public void onResult(App.Result<User> result) {
+//                if(result.isSuccess())
+//                {
+//                    Log.v("User","Logged In Successfully");
+//
+//                }
+//                else
+//                {
+//                    Log.v("User","Failed to Login");
+//                }
+//            }
+//        });
         User user = app.currentUser();
 
         System.out.println(user);
@@ -98,18 +106,47 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
             @Override
             public void onSuccess(Realm realm) {
                 Log.v("EXAMPLE", "Successfully opened a realm.");
+                User user = app.currentUser();
+                MongoClient mongoClient =
+                        user.getMongoClient("mongodb-atlas");
+
+                MongoDatabase mongoDatabase =
+                        mongoClient.getDatabase("vehicle");
+                CodecRegistry pojoCodecRegistry = fromRegistries(AppConfiguration.DEFAULT_BSON_CODEC_REGISTRY,
+                        fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+
+                MongoCollection<Users> mongoCollection =
+                        mongoDatabase.getCollection(
+                                "users",
+                                Users.class).withCodecRegistry(pojoCodecRegistry);
+
+                Log.v("EXAMPLE", "Successfully instantiated the MongoDB collection handle");
+
+
+                Document queryFilter  = new Document("partition_key","1");
+//                RealmResultTask<MongoCursor<Users>> findTask = mongoCollection.find(queryFilter).iterator();
+//                findTask.getAsync(task -> {
+//                    if (task.isSuccess()) {
+//                        MongoCursor<Users> results = task.get();
+//                        Log.v("EXAMPLE", "successfully found all plants for Store 42:");
+//                        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>"+results);
+//                        while (results.hasNext()) {
+//
+//                            Log.v("EXAMPLE", results.next().toString());
+//                        }
+//                    } else {
+//                        Log.e("EXAMPLE", "failed to find documents with: ", task.getError());
+//                    }
+//                });
                 // Read all tasks in the realm. No special syntax required for synced realms.
-                List<Users> users = realm.where(Users.class).findAll();
-
-
-
+//                List<Users> users = realm.where(Users.class).findAll();
 //                output = findViewById(R.id.textView3);
 //                output.setText("");
 //                for(int i=0;i<users.size();i++){
-//                    output.append("ID : "+users.get(i).get_id()+" Name : "+users.get(i).getOwner_name()+" Age : "+users.get(i).getCity_of_purchase()+" \n");
+//                    output.append("reg_no: "+users.get(i).get_id()+"- Name: "+users.get(i).getOwner_name());
+//                    System.out.println(users.get(i).get_id());
 //                }
-                // Write to the realm. No special syntax required for synced realms.
-                // Don't forget to close your realm!
+//                System.out.println(users.get(0).get_id());
                 realm.close();
             }
         });
