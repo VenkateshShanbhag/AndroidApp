@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.trackerapp.Model.Tracking;
+import com.example.trackerapp.Model.UserQuery;
 import com.example.trackerapp.Model.Users;
 
 import org.bson.Document;
@@ -115,29 +116,31 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
                 CodecRegistry pojoCodecRegistry = fromRegistries(AppConfiguration.DEFAULT_BSON_CODEC_REGISTRY,
                         fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
-                MongoCollection<Users> mongoCollection =
+                MongoCollection<UserQuery> mongoCollection =
                         mongoDatabase.getCollection(
                                 "users",
-                                Users.class).withCodecRegistry(pojoCodecRegistry);
+                                UserQuery.class).withCodecRegistry(pojoCodecRegistry);
 
                 Log.v("EXAMPLE", "Successfully instantiated the MongoDB collection handle");
 
 
                 Document queryFilter  = new Document("partition_key","1");
-//                RealmResultTask<MongoCursor<Users>> findTask = mongoCollection.find(queryFilter).iterator();
-//                findTask.getAsync(task -> {
-//                    if (task.isSuccess()) {
-//                        MongoCursor<Users> results = task.get();
-//                        Log.v("EXAMPLE", "successfully found all plants for Store 42:");
-//                        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>"+results);
-//                        while (results.hasNext()) {
-//
-//                            Log.v("EXAMPLE", results.next().toString());
-//                        }
-//                    } else {
-//                        Log.e("EXAMPLE", "failed to find documents with: ", task.getError());
-//                    }
-//                });
+
+                RealmResultTask<MongoCursor<UserQuery>> findTask = mongoCollection.find(queryFilter).iterator();
+                findTask.getAsync(users -> {
+                    if (users.isSuccess()) {
+                        MongoCursor<UserQuery> results = users.get();
+                        Log.v("EXAMPLE", "successfully found Data");
+                        while (results.hasNext()) {
+
+                            System.out.println(results.next().toString());
+                        }
+                    } else {
+                        Log.e("EXAMPLE", "failed to find documents with: ", users.getError());
+                    }
+                });
+
+
                 // Read all tasks in the realm. No special syntax required for synced realms.
 //                List<Users> users = realm.where(Users.class).findAll();
 //                output = findViewById(R.id.textView3);
