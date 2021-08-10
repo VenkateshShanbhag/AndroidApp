@@ -3,14 +3,14 @@ package com.example.trackerapp.Model;
 import org.bson.types.ObjectId;
 
 public class UserQuery {
-    private String _id;
+    private String id;
 
-    public String get_id() {
-        return _id;
+    public String getId() {
+        return id;
     }
 
-    public void set_id(String _id) {
-        this._id = _id;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getOwner_name() {
@@ -43,8 +43,8 @@ public class UserQuery {
 
     // empty constructor required for MongoDB Data Access POJO codec compatibility
     public UserQuery() {}
-    public UserQuery(String _id, String owner_name, String city_of_purchase, String partition_key) {
-        this._id = _id;
+    public UserQuery(String id, String owner_name, String city_of_purchase, String partition_key) {
+        this.id = id;
         this.owner_name = owner_name;
         this.city_of_purchase = city_of_purchase;
         this.partition_key = partition_key;
@@ -53,6 +53,6 @@ public class UserQuery {
 
     @Override
     public String toString() {
-        return " [registration number : " + _id + ", Name : " + owner_name + ", City of Purchase : " + city_of_purchase + ", Partition_key : " + partition_key +"]";
+        return "Name:" + owner_name + "  reg#:" + id;
     }
 }

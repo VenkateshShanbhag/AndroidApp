@@ -22,6 +22,7 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,10 +51,7 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
     String Appid = "application-0-wfzcl";
     private App app;
     public Realm realm;
-    MongoClient client;
-    ListView listView;
-    TextView output;
-    String[] months;
+    public List<String> vehicles=new ArrayList<String>();
 
 
     @Override
@@ -94,7 +92,6 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
 //        });
         User user = app.currentUser();
 
-        System.out.println(user);
         String partitionKey = "1";
         SyncConfiguration config = new SyncConfiguration.Builder(
                 user,
@@ -102,46 +99,48 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
                 .build();
 
 
+        try{
+            Realm.getInstanceAsync(config, new Realm.Callback() {
+                @Override
+                public void onSuccess(Realm realm) {
+                    Log.v("EXAMPLE", "Successfully opened a realm.");
+                    User user = app.currentUser();
+                    MongoClient mongoClient =
+                            user.getMongoClient("mongodb-atlas");
 
-        Realm.getInstanceAsync(config, new Realm.Callback() {
-            @Override
-            public void onSuccess(Realm realm) {
-                Log.v("EXAMPLE", "Successfully opened a realm.");
-                User user = app.currentUser();
-                MongoClient mongoClient =
-                        user.getMongoClient("mongodb-atlas");
+                    MongoDatabase mongoDatabase =
+                            mongoClient.getDatabase("vehicle");
+                    CodecRegistry pojoCodecRegistry = fromRegistries(AppConfiguration.DEFAULT_BSON_CODEC_REGISTRY,
+                            fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
-                MongoDatabase mongoDatabase =
-                        mongoClient.getDatabase("vehicle");
-                CodecRegistry pojoCodecRegistry = fromRegistries(AppConfiguration.DEFAULT_BSON_CODEC_REGISTRY,
-                        fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+                    MongoCollection<UserQuery> mongoCollection =
+                            mongoDatabase.getCollection(
+                                    "users",
+                                    UserQuery.class).withCodecRegistry(pojoCodecRegistry);
 
-                MongoCollection<UserQuery> mongoCollection =
-                        mongoDatabase.getCollection(
-                                "users",
-                                UserQuery.class).withCodecRegistry(pojoCodecRegistry);
-
-                Log.v("EXAMPLE", "Successfully instantiated the MongoDB collection handle");
+                    Log.v("EXAMPLE", "Successfully instantiated the MongoDB collection handle");
 
 
-                Document queryFilter  = new Document("partition_key","1");
+                    Document queryFilter  = new Document("partition_key","1");
 
-                RealmResultTask<MongoCursor<UserQuery>> findTask = mongoCollection.find(queryFilter).iterator();
-                findTask.getAsync(users -> {
-                    if (users.isSuccess()) {
-                        MongoCursor<UserQuery> results = users.get();
-                        Log.v("EXAMPLE", "successfully found Data");
-                        while (results.hasNext()) {
+                    RealmResultTask<MongoCursor<UserQuery>> findTask = mongoCollection.find(queryFilter).iterator();
 
-                            System.out.println(results.next().toString());
+                    findTask.getAsync(users -> {
+                        if (users.isSuccess()) {
+                            MongoCursor<UserQuery> results = users.get();
+                            Log.v("EXAMPLE", "successfully found Data");
+                            while (results.hasNext()) {
+                                String result = results.next().toString();
+                                vehicles.add(result);
+                            }
+                            renderListActivity(vehicles);
+                        } else {
+                            Log.e("EXAMPLE", "failed to find documents with: ", users.getError());
                         }
-                    } else {
-                        Log.e("EXAMPLE", "failed to find documents with: ", users.getError());
-                    }
-                });
+                    });
 
 
-                // Read all tasks in the realm. No special syntax required for synced realms.
+                    // Read all tasks in the realm. No special syntax required for synced realms.
 //                List<Users> users = realm.where(Users.class).findAll();
 //                output = findViewById(R.id.textView3);
 //                output.setText("");
@@ -150,24 +149,14 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
 //                    System.out.println(users.get(i).get_id());
 //                }
 //                System.out.println(users.get(0).get_id());
-                realm.close();
-            }
-        });
+                    realm.close();
+                }
+            });
 
-
-
-//
-//        realm = Realm.getInstance(config);
-//
-//
-//        RealmResults<Users> vehicle_details = realm.where(Users.class).findAll();
-//        System.out.println(vehicle_details);
-
-
-//        output.setText("");
-//        for(int i=0;i<users_data.size();i++){
-//            output.append("ID : "+users_data.get(i).get_id()+" Name : "+users_data.get(i).getOwner_name()+" \n");
-//        }
+        }
+        catch (Exception e){
+            System.out.println("Failed > "+e);
+        }
 
 //        months = new DateFormatSymbols().getMonths();
 //        //ArrayAdapter<String> arr    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.trackerapp/com.example.trackerapp.AllVehicleDetails}: java.lang.ClassCastException: io.realm.internal.async.RealmResultTaskImpl cannot be cast to org.bson.DocumentayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, months);
@@ -176,13 +165,18 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
 //        listView.setOnItemClickListener(this);
     }
 
+    public void renderListActivity(List<String> vehicles){
+        System.out.println(vehicles);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, vehicles);
+        ListView listView = (ListView) findViewById(R.id.lvVehicle);
+        listView.setAdapter(arrayAdapter);
+    }
+
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
         Object month = adapterView.getItemAtPosition(pos).toString();
         System.out.println(month);
         Intent i = new Intent(this, MainActivity.class);
         startActivity(i);
-        //Toast.makeText(getApplicationContext(), "Clicked: "+ month, Toast.LENGTH_SHORT).show();
-
     }
 }

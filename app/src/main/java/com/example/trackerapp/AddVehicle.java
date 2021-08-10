@@ -94,6 +94,7 @@ public class AddVehicle extends AppCompatActivity {
                     transactionRealm.insert(task);
                     System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
                 });
+
                 backgroundThreadRealm.close();
             }
         });
