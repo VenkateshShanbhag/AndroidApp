@@ -1,9 +1,16 @@
 package com.example.trackerapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.usage.NetworkStats;
+import android.content.Context;
 import android.content.Intent;
 import android.icu.text.DateFormatSymbols;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -98,13 +105,12 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
                 partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
                 .build();
 
-
-        try{
-            Realm.getInstanceAsync(config, new Realm.Callback() {
-                @Override
-                public void onSuccess(Realm realm) {
-                    Log.v("EXAMPLE", "Successfully opened a realm.");
-                    User user = app.currentUser();
+        Realm.getInstanceAsync(config, new Realm.Callback() {
+            @Override
+            public void onSuccess(Realm realm) {
+                Log.v("EXAMPLE", "Successfully opened a realm.");
+                User user = app.currentUser();
+                try{
                     MongoClient mongoClient =
                             user.getMongoClient("mongodb-atlas");
 
@@ -138,9 +144,13 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
                             Log.e("EXAMPLE", "failed to find documents with: ", users.getError());
                         }
                     });
+                }catch (Exception e){
+
+                }
 
 
-                    // Read all tasks in the realm. No special syntax required for synced realms.
+
+                // Read all tasks in the realm. No special syntax required for synced realms.
 //                List<Users> users = realm.where(Users.class).findAll();
 //                output = findViewById(R.id.textView3);
 //                output.setText("");
@@ -149,14 +159,13 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
 //                    System.out.println(users.get(i).get_id());
 //                }
 //                System.out.println(users.get(0).get_id());
-                    realm.close();
-                }
-            });
+                realm.close();
+            }
+        });
 
-        }
-        catch (Exception e){
-            System.out.println("Failed > "+e);
-        }
+
+
+
 
 //        months = new DateFormatSymbols().getMonths();
 //        //ArrayAdapter<String> arr    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.trackerapp/com.example.trackerapp.AllVehicleDetails}: java.lang.ClassCastException: io.realm.internal.async.RealmResultTaskImpl cannot be cast to org.bson.DocumentayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, months);
@@ -170,13 +179,17 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, vehicles);
         ListView listView = (ListView) findViewById(R.id.lvVehicle);
         listView.setAdapter(arrayAdapter);
+        listView.setOnItemClickListener(this);
+
     }
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-        Object month = adapterView.getItemAtPosition(pos).toString();
-        System.out.println(month);
-        Intent i = new Intent(this, MainActivity.class);
+        System.out.println(">>>>>>>> INside ADaptor view");
+        String vehicle_data = adapterView.getItemAtPosition(pos).toString();
+        System.out.println(vehicle_data);
+        Intent i = new Intent(this, MapsActivity.class);
+        i.putExtra("key",vehicle_data);
         startActivity(i);
     }
 }

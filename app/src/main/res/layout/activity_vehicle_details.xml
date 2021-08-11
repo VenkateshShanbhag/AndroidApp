@@ -14,7 +14,7 @@
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ListView"
+        android:text="Vehicle Details"
         android:textColor="@android:color/holo_blue_dark"
         android:textSize="32sp"
         android:layout_marginBottom="5dp"
@@ -22,6 +22,8 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/lvVehicle" />
+        android:id="@+id/lvVehicle"
+        android:layout_gravity="center"/>
+
 
 </LinearLayout>

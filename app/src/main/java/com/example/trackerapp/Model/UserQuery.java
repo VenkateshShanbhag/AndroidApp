@@ -53,6 +53,6 @@ public class UserQuery {
 
     @Override
     public String toString() {
-        return "Name:" + owner_name + "  reg#:" + id;
+        return owner_name + " : " + id;
     }
 }
