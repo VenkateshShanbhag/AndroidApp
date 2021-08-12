@@ -71,18 +71,13 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
 
 
         /* Realm connection and auth */
-        Realm.init(this);
+
         try{
             getDataFromSync();
         } catch (Exception e)
         {
             System.out.println("EXCEPTION >>>>>>>>>>>>>>>>> "+ e);
         }
-//        months = new DateFormatSymbols().getMonths();
-//        //ArrayAdapter<String> arr    java.lang.RuntimeException: Unable to start activity ComponentInfo{com.example.trackerapp/com.example.trackerapp.AllVehicleDetails}: java.lang.ClassCastException: io.realm.internal.async.RealmResultTaskImpl cannot be cast to org.bson.DocumentayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, months);
-//        ArrayAdapter<Object> arrayAdapter = new ArrayAdapter<Object>(this, R.layout.list_item_vehicle, Collections.singletonList(users_data));
-//        listView.setAdapter(arrayAdapter);
-//        listView.setOnItemClickListener(this);
     }
 
     public void getDataFromSync(){
@@ -99,6 +94,8 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         App app = new App(new AppConfiguration.Builder(Appid)
                 .defaultClientResetHandler(handler)
                 .build());
+
+
         app.login(Credentials.anonymous());
 //        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
 //            @Override

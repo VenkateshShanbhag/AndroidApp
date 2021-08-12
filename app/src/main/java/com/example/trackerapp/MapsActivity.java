@@ -55,7 +55,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //The key argument here must match that used in the other activity
         }
 
-        Realm.init(this);
+        //Realm.init(this);
 
         /* Sync Session */
         SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {

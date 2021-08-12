@@ -15,6 +15,7 @@ import android.widget.EditText;
 import com.example.trackerapp.Model.Users;
 
 import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
 import io.realm.mongodb.Credentials;
@@ -49,26 +50,23 @@ public class AddVehicle extends AppCompatActivity {
         city = findViewById(R.id.city);
         btnSave = findViewById(R.id.btn_save);
 
-        Realm.init(this);
+        // Initialized in MyApplication.java file
+        //Realm.init(this);
         app = new App(new AppConfiguration.Builder(Appid).build());
 
-        app.login(Credentials.anonymous());
-
-        // TODO: Implement Login using user creds.
-//        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
-//            @Override
-//            public void onResult(App.Result<User> result) {
-//                if(result.isSuccess())
-//                {
-//                    Log.v("User","Logged In Successfully");
-//
-//                }
-//                else
-//                {
-//                    Log.v("User","Failed to Login");
-//                }
-//            }
-//        });
+        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
+            @Override
+            public void onResult(App.Result<User> result) {
+                if(result.isSuccess())
+                {
+                    Log.v("User","Logged In Successfully");
+                }
+                else
+                {
+                    Log.v("User","Failed to Login");
+                }
+            }
+        });
 
         User user = app.currentUser();
 
@@ -85,20 +83,26 @@ public class AddVehicle extends AppCompatActivity {
                 Intent i = new Intent(getApplicationContext(),MainActivity.class);
                 startActivity(i);
                 String partitionValue = "1";
-                SyncConfiguration config = new SyncConfiguration.Builder(
-                        user,
-                        partitionValue).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
+//                RealmConfiguration config = new RealmConfiguration.Builder()
+//                        .build();
+//                Realm realm = Realm.getInstance(config);
+//                realm.executeTransactionAsync(transactionRealm -> { // start a write transaction
+//                    transactionRealm.insert(task);
+//                    System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
+//                });
+                // Sync the realm db data with remote network
+                SyncConfiguration config = new SyncConfiguration.Builder(user, partitionValue)
+                        .allowWritesOnUiThread(true)
+                        .allowQueriesOnUiThread(true)
                         .build();
                 Realm backgroundThreadRealm = Realm.getInstance(config);
                 backgroundThreadRealm.executeTransaction (transactionRealm -> {
                     transactionRealm.insert(task);
                     System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
                 });
-
                 backgroundThreadRealm.close();
             }
         });
-
 //        btnSave.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {
@@ -121,7 +125,6 @@ public class AddVehicle extends AppCompatActivity {
 //            }
 //        });
 
-
     }
 
     private void showCustomDialog() {
@@ -130,7 +133,6 @@ public class AddVehicle extends AppCompatActivity {
 
         //then we will inflate the custom alert dialog xml that we created
         View dialogView = LayoutInflater.from(this).inflate(R.layout.activity_dialog, viewGroup, false);
-
 
         //Now we need an AlertDialog.Builder object
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
