@@ -43,6 +43,7 @@ public class AddVehicle extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_add_vehicle);
 
         name = findViewById(R.id.name);
@@ -57,30 +58,27 @@ public class AddVehicle extends AppCompatActivity {
         app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
             @Override
             public void onResult(App.Result<User> result) {
-                if(result.isSuccess())
-                {
-                    Log.v("User","Logged In Successfully");
-                }
-                else
-                {
-                    Log.v("User","Failed to Login");
+                if (result.isSuccess()) {
+                    Log.v("User", "Logged In Successfully");
+                } else {
+                    Log.v("User", "Failed to Login");
                 }
             }
         });
 
         User user = app.currentUser();
 
-        Users task = new Users();
+        Users user_data = new Users();
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                task.setOwner_name(name.getText().toString());
-                task.set_id(reg_num.getText().toString());
-                task.setCity_of_purchase(city.getText().toString());
-                task.setPartition_key("1");
+                user_data.setOwner_name(name.getText().toString());
+                user_data.set_id(reg_num.getText().toString());
+                user_data.setCity_of_purchase(city.getText().toString());
+                user_data.setPartition_key("1");
 
                 showCustomDialog();
-                Intent i = new Intent(getApplicationContext(),MainActivity.class);
+                Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);
                 String partitionValue = "1";
 //                RealmConfiguration config = new RealmConfiguration.Builder()
@@ -96,35 +94,13 @@ public class AddVehicle extends AppCompatActivity {
                         .allowQueriesOnUiThread(true)
                         .build();
                 Realm backgroundThreadRealm = Realm.getInstance(config);
-                backgroundThreadRealm.executeTransaction (transactionRealm -> {
-                    transactionRealm.insert(task);
+                backgroundThreadRealm.executeTransaction(transactionRealm -> {
+                    transactionRealm.insert(user_data);
                     System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
                 });
                 backgroundThreadRealm.close();
             }
         });
-//        btnSave.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                User user = app.currentUser();
-//                mongoClient = user.getMongoClient("mongodb-atlas");
-//                mongoDatabase = mongoClient.getDatabase("vehicle");
-//                MongoCollection<Document> mongoCollection = mongoDatabase.getCollection("users");
-//                mongoCollection.insertOne(new Document("name", name.getText().toString()).append("reg_no",reg_num.getText().toString())).getAsync( result -> {
-//                    if(result.isSuccess()){
-//                        System.out.println("Data insterted successfully");
-//                        showCustomDialog();
-//                        Intent i = new Intent(getApplicationContext(),MainActivity.class);
-//                        startActivity(i);
-//                    }
-//                    else {
-//                        System.out.println("!!!!!!!!!!!!!!!! FAILURE >>>>>>>>>>>>>>>>>>>>");
-//                    }
-//                });
-//
-//            }
-//        });
-
     }
 
     private void showCustomDialog() {
@@ -147,86 +123,3 @@ public class AddVehicle extends AppCompatActivity {
 
     }
 }
-
-//public class AddVehicle extends AppCompatActivity {
-//    EditText name;
-//    EditText reg_num;
-//    Button btnSave;
-//    Realm realm;
-//
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_add_vehicle);
-//        name = findViewById(R.id.name);
-//        reg_num = findViewById(R.id.reg_no);
-//        btnSave = findViewById(R.id.btn_save);
-//
-//        btnSave.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                String appId = "application-0-aayit";
-//                App app = new App(new AppConfiguration.Builder(appId)
-//                        .build());
-//
-//                Credentials credentials = Credentials.anonymous();
-//
-//                app.loginAsync(credentials, result -> {
-//                    if (result.isSuccess()) {
-//                        Log.v("QUICKSTART", "Successfully authenticated anonymously.");
-//                        User user = app.currentUser();
-//                        // interact with realm using your user object here
-//                    } else {
-//                        Log.e("QUICKSTART", "Failed to log in. Error: " + result.getError());
-//                    }
-//                });
-//
-//                System.out.println("\n\n LOGGED IN\n\n");
-//
-//                SyncConfiguration configuration = new SyncConfiguration.Builder(
-//                        app.currentUser(), "123"
-//                ).allowQueriesOnUiThread(true).allowWritesOnUiThread(true).build();
-//
-//                realm = Realm.getDefaultInstance();
-//                realm.executeTransactionAsync(new Realm.Transaction() {
-//                                                  @Override
-//                                                  public void execute(Realm bgRealm) {
-//                                                      //create vehicle object
-//
-//                                                      Tracker vehicle = bgRealm.createObject(Tracker.class, UUID.randomUUID().toString());
-//                                                      vehicle.setName(name.getText().toString());
-//                                                      vehicle.setReg_no(reg_num.getText().toString());
-//                                                      bgRealm.copyFromRealm(vehicle);
-//
-//                                                      List<Tracker> dataModals = new ArrayList<>();
-//                                                      dataModals = bgRealm.where(Tracker.class).findAll();
-//                                                      System.out.println(dataModals);
-//
-//
-//
-//                                                      System.out.println("SUCCESSFULLY ADDED THE DATA TO REALM DB");
-//                                                  }
-//                                              }, new Realm.Transaction.OnSuccess() {
-//                                                  @Override
-//                                                  public void onSuccess() {
-//                                                      RealmResults<Tracker> tracker = realm.where(Tracker.class).findAll();
-//                                                      System.out.println(tracker);
-//
-//                                                      System.out.println("Realm Success");
-//                                                      realm.close();
-//                                                  }
-//
-//
-//                                              }, new Realm.Transaction.OnError() {
-//                                                  @Override
-//                                                  public void onError(Throwable error) {
-//                                                      System.out.println("Realm Failed");
-//                                                      System.out.println(error);
-//                                                  }
-//                                              }
-//                );
-//            }
-//        });
-//    }
-//
-//}

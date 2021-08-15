@@ -4,6 +4,7 @@ import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.Required;
 
+import java.util.Date;
 import org.bson.types.ObjectId;
 
 public class Tracking extends RealmObject {
@@ -11,7 +12,7 @@ public class Tracking extends RealmObject {
     @Required
     private ObjectId _id;
 
-    private String city_of_purchase;
+    private Date Timestamp;
 
     private Double lat;
 
@@ -19,12 +20,14 @@ public class Tracking extends RealmObject {
 
     private String partition_key;
 
+    private String reg_num;
+
     // Standard getters & setters
     public ObjectId get_id() { return _id; }
     public void set_id(ObjectId _id) { this._id = _id; }
 
-    public String getCity_of_purchase() { return city_of_purchase; }
-    public void setCity_of_purchase(String city_of_purchase) { this.city_of_purchase = city_of_purchase; }
+    public Date getTimestamp() { return Timestamp; }
+    public void setTimestamp(Date Timestamp) { this.Timestamp = Timestamp; }
 
     public Double getLat() { return lat; }
     public void setLat(Double lat) { this.lat = lat; }
@@ -34,4 +37,7 @@ public class Tracking extends RealmObject {
 
     public String getPartition_key() { return partition_key; }
     public void setPartition_key(String partition_key) { this.partition_key = partition_key; }
+
+    public String getReg_num() { return reg_num; }
+    public void setReg_num(String reg_num) { this.reg_num = reg_num; }
 }

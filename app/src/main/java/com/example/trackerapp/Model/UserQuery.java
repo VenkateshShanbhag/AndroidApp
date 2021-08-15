@@ -2,15 +2,17 @@ package com.example.trackerapp.Model;
 
 import org.bson.types.ObjectId;
 
+import io.realm.RealmObject;
+
 public class UserQuery {
-    private String id;
+    private String _id;
 
     public String getId() {
-        return id;
+        return _id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setId(String _id) {
+        this._id = _id;
     }
 
     public String getOwner_name() {
@@ -43,8 +45,8 @@ public class UserQuery {
 
     // empty constructor required for MongoDB Data Access POJO codec compatibility
     public UserQuery() {}
-    public UserQuery(String id, String owner_name, String city_of_purchase, String partition_key) {
-        this.id = id;
+    public UserQuery(String _id, String owner_name, String city_of_purchase, String partition_key) {
+        this._id = _id;
         this.owner_name = owner_name;
         this.city_of_purchase = city_of_purchase;
         this.partition_key = partition_key;
@@ -53,6 +55,6 @@ public class UserQuery {
 
     @Override
     public String toString() {
-        return owner_name + " : " + id;
+        return owner_name + " - " + _id;
     }
 }

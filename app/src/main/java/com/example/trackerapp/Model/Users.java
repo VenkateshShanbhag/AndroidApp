@@ -29,4 +29,10 @@ public class Users extends RealmObject {
     public void setVehicle_reg_date(String vehicle_reg_date) { this.vehicle_reg_date = vehicle_reg_date; }
     public String getPartition_key() { return partition_key; }
     public void setPartition_key(String partition_key) { this.partition_key = partition_key; }
+
+    public Users() {}
+    @Override
+    public String toString() {
+        return owner_name + " - " + _id;
+    }
 }

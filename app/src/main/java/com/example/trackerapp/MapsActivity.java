@@ -1,10 +1,17 @@
 package com.example.trackerapp;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.example.trackerapp.Model.Tracking;
 import com.example.trackerapp.Model.UserQuery;
@@ -20,7 +27,13 @@ import com.example.trackerapp.databinding.ActivityMapsBinding;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import io.realm.Realm;
+import io.realm.RealmResults;
+import io.realm.Sort;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
 import io.realm.mongodb.Credentials;
@@ -38,24 +51,32 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private GoogleMap googleMapHomeFrag;
+    LatLng driverLatLng;
     private ActivityMapsBinding binding;
     String Appid = "application-0-wfzcl";
     private App app;
     public Realm realm;
+    public double lat;
+    public double lon;
+    public List<Tracking> tracking_data = new ArrayList<Tracking>();
+    public String[] registration_number;
+    String value;
+    Button refresh;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Get the value passed from intent in previous activity.
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            String value = extras.getString("key");
+            value = extras.getString("key");
             Log.v("Intent Value" , value);
             //The key argument here must match that used in the other activity
         }
+        registration_number = value.split(" - ", 2);
 
-        //Realm.init(this);
+        System.out.println("REGISTRATION NUMBER"+registration_number[1].toUpperCase());
 
         /* Sync Session */
         SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
@@ -72,14 +93,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .defaultClientResetHandler(handler)
                 .build());
         app.login(Credentials.anonymous());
-
         User user = app.currentUser();
 
-        String partitionKey = "1";
-        SyncConfiguration config = new SyncConfiguration.Builder(
-                user,
-                partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
-                .build();
+        syncConfigurations(user);
+        // System.out.println();
 
         // MAP Activity
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
@@ -88,50 +105,58 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        refresh = findViewById(R.id.refresh);
 
-        MongoCollection<UserQuery> mongoCollection = getCollection(user);
-        Log.v("Mongo Collection Object >>>>>>", String.valueOf(mongoCollection));
-
-
-        //TODO: Implement check Network availability before polling the data for maps
-//        while (true){
-//            getTrackingData(mongoCollection);
-//        }
-    }
-
-    public MongoCollection getCollection(User user){
-        MongoClient mongoClient =
-                user.getMongoClient("mongodb-atlas");
-
-        MongoDatabase mongoDatabase =
-                mongoClient.getDatabase("vehicle");
-        CodecRegistry pojoCodecRegistry = fromRegistries(AppConfiguration.DEFAULT_BSON_CODEC_REGISTRY,
-                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-
-        MongoCollection<UserQuery> mongoCollection =
-                mongoDatabase.getCollection(
-                        "users",
-                        UserQuery.class).withCodecRegistry(pojoCodecRegistry);
-
-        Log.v("EXAMPLE", "Successfully instantiated the MongoDB collection handle");
-        return mongoCollection;
-    }
-
-    public void getTrackingData(MongoCollection mongoCollection){
-        Tracking tracking_data = new Tracking();
+        refresh.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                refreshPage();
+            }
+        });
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" +refresh);
 
     }
 
+
+    public void syncConfigurations(User user){
+
+        String partitionKey = "1";
+        SyncConfiguration config = new SyncConfiguration.Builder(
+                user,
+                partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
+                .build();
+
+        Realm backgroundThreadRealm = Realm.getInstance(config);
+        backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(@NonNull Realm realm) {
+                Tracking results = realm.where(Tracking.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
+                tracking_data.add(results);
+            }
+        });
+        System.out.println(" ))))))))))))))>>>>>>>>>>>>>>>>>>> "+tracking_data);
+
+        for (int i = 0; i < tracking_data.size(); i++){
+            lat = tracking_data.get(i).getLat();
+            lon = tracking_data.get(i).getLon();
+        }
+
+        backgroundThreadRealm.close();
+    }
+
+    private void refreshPage() {
+        Intent intent = getIntent();
+        finish();
+        intent.putExtra("key",value);
+        startActivity(intent);
+    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        /* Realm connection and auth */
-
-
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+        LatLng sydney = new LatLng(lat, lon);
+        mMap.addMarker(new MarkerOptions().position(sydney).title(registration_number[1].toUpperCase()));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 }
