@@ -9,7 +9,7 @@
     >
 
     <Button
-        android:id="@+id/refresh"
+        android:id="@+id/refresh2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="refresh"
@@ -17,7 +17,7 @@
         />
 
     <fragment
-        android:id="@+id/map"
+        android:id="@+id/map2"
 
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"

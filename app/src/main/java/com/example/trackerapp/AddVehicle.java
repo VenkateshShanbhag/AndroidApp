@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.example.trackerapp.Model.Tracking;
 import com.example.trackerapp.Model.Users;
 
 import io.realm.Realm;
@@ -69,12 +70,16 @@ public class AddVehicle extends AppCompatActivity {
         User user = app.currentUser();
 
         Users user_data = new Users();
+        Tracking tracking_data = new Tracking();
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                user_data.setOwner_name(name.getText().toString());
-                user_data.set_id(reg_num.getText().toString());
-                user_data.setCity_of_purchase(city.getText().toString());
+                String owner_name = name.getText().toString();
+                String registration_num = reg_num.getText().toString();
+                String city_of_reg = city.getText().toString();
+                user_data.setOwner_name(owner_name.toUpperCase());
+                user_data.set_id(registration_num.toUpperCase());
+                user_data.setCity_of_purchase(city_of_reg.toUpperCase());
                 user_data.setPartition_key("1");
 
                 showCustomDialog();
