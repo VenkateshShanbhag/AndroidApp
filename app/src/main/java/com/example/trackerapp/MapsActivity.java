@@ -11,7 +11,9 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 
 import com.example.trackerapp.Model.Tracking;
 import com.example.trackerapp.Model.UserQuery;
@@ -24,9 +26,18 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.trackerapp.databinding.ActivityMapsBinding;
 
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,10 +48,12 @@ import io.realm.Sort;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
 import io.realm.mongodb.Credentials;
+import io.realm.mongodb.RealmResultTask;
 import io.realm.mongodb.User;
 import io.realm.mongodb.mongo.MongoClient;
 import io.realm.mongodb.mongo.MongoCollection;
 import io.realm.mongodb.mongo.MongoDatabase;
+import io.realm.mongodb.mongo.iterable.MongoCursor;
 import io.realm.mongodb.sync.ClientResetRequiredError;
 import io.realm.mongodb.sync.SyncConfiguration;
 import io.realm.mongodb.sync.SyncSession;
@@ -63,6 +76,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public String[] registration_number;
     String value;
     Button refresh;
+    Button show_timeline;
+    String partitionKey = "1";
+    public List<String> vehicles=new ArrayList<String>();
+    User user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +91,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.v("Intent Value" , value);
             //The key argument here must match that used in the other activity
         }
+
         registration_number = value.split(" - ", 2);
 
         System.out.println("REGISTRATION NUMBER"+registration_number[1].toUpperCase());
@@ -113,14 +131,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 refreshPage();
             }
         });
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" +refresh);
 
+        show_timeline = findViewById(R.id.timeline);
+        try{
+            show_timeline.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    try {
+                        showVehicleTimeline();
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }catch (Exception e){
+            Log.e("NETWORK: ", "PLEASE CHEK YOUR NETWORK CONNECTION");
+        }
+    }
+
+    public void showVehicleTimeline() throws IOException {
+
+        URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-wfzcl/service/tracking-data-api/incoming_webhook/tracking-data-api?reg_num=KA47MH1234");
+        String readLine = null;
+        HttpURLConnection conection = (HttpURLConnection) url.openConnection();
+        conection.setRequestMethod("GET");
+        int responseCode = conection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(conection.getInputStream()));
+            StringBuffer response = new StringBuffer();
+            while ((readLine = in .readLine()) != null) {
+                response.append(readLine);
+            } in .close();
+            // TODO: Parse the result and display in maps
+            System.out.println("JSON String Result " + response.toString());
+            //GetAndPost.POSTRequest(response.toString());
+        } else {
+            System.out.println("GET NOT WORKED");
+        }
     }
 
 
     public void syncConfigurations(User user){
-
-        String partitionKey = "1";
         SyncConfiguration config = new SyncConfiguration.Builder(
                 user,
                 partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
@@ -134,7 +188,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 tracking_data.add(results);
             }
         });
-        System.out.println(" ))))))))))))))>>>>>>>>>>>>>>>>>>> "+tracking_data);
 
         for (int i = 0; i < tracking_data.size(); i++){
             lat = tracking_data.get(i).getLat();

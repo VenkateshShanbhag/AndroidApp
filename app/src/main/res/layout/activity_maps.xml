@@ -15,6 +15,13 @@
         android:text="refresh"
         android:backgroundTint="@android:color/holo_blue_dark"
         />
+    <Button
+        android:id="@+id/timeline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Show Timeline"
+        android:backgroundTint="@android:color/holo_blue_dark"
+        />
 
     <fragment
         android:id="@+id/map"
