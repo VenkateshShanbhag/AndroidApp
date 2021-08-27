@@ -28,7 +28,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.example.trackerapp.databinding.ActivityShowAllVehiclesBinding;
+import com.example.trackerapp.databinding.ActivityMapsBinding;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -60,8 +60,11 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
-    private ActivityShowAllVehiclesBinding binding;
+    private GoogleMap googleMapHomeFrag;
+    LatLng driverLatLng;
+    private ActivityMapsBinding binding;
     String Appid;
+    private App app;
     public Realm realm;
     public double lat;
     public double lon;
@@ -71,6 +74,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Button refresh;
     Button show_timeline;
     String partitionKey = "1";
+    public List<String> vehicles = new ArrayList<String>();
     private JSONArray jsonObject;
     private GeofencingClient geofencingClient;
     List<String> latList = new ArrayList<String>();
@@ -78,6 +82,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     List<LatLng> latlonList = new ArrayList<LatLng>();
     int vehicleTimeline = 0;
     MyApplication dbConfigs = new MyApplication();
+    int networkFlag = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,7 +122,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         // MAP Activity
-        binding = ActivityShowAllVehiclesBinding.inflate(getLayoutInflater());
+        binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()

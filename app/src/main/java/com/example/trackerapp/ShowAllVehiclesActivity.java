@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.example.trackerapp.Model.Tracking;
+import com.example.trackerapp.databinding.ActivityShowAllVehiclesBinding;
 import com.google.android.gms.common.internal.Constants;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -34,7 +35,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.example.trackerapp.databinding.ActivityShowAllVehiclesBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
