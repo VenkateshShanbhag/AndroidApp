@@ -11,21 +11,16 @@ import io.realm.mongodb.sync.SyncConfiguration;
 import io.realm.mongodb.sync.SyncSession;
 
 public class MyApplication extends Application {
-    public String Appid = "application-0-wfzcl";
     public App app1;
+    String appid = "application-0-ykkzh";
+
+    public String getAppid() {
+        return appid;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
         Realm.init(this);
-//        SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
-//            @Override
-//            public void onClientReset(SyncSession session, ClientResetRequiredError error) {
-//                Log.e("EXAMPLE", "Client Reset required for: " +
-//                        session.getConfiguration().getServerUrl() + " for error: " +
-//                        error.toString());
-//            }
-//        };
-//        app1 = new App(new AppConfiguration.Builder(Appid).defaultClientResetHandler(handler)
-//                .build());
     }
 }

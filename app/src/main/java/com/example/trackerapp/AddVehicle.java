@@ -15,18 +15,19 @@ import android.widget.EditText;
 import com.example.trackerapp.Model.Tracking;
 import com.example.trackerapp.Model.Users;
 
+import org.bson.types.ObjectId;
+
+import java.util.Date;
+
 import io.realm.Realm;
-import io.realm.RealmConfiguration;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
 import io.realm.mongodb.Credentials;
 import io.realm.mongodb.User;
-import io.realm.mongodb.mongo.MongoClient;
-import io.realm.mongodb.mongo.MongoDatabase;
 import io.realm.mongodb.sync.SyncConfiguration;
 
 public class AddVehicle extends AppCompatActivity {
-    String Appid = "application-0-wfzcl";
+    String Appid;
     private App app;
     EditText name;
     EditText reg_num;
@@ -34,15 +35,10 @@ public class AddVehicle extends AppCompatActivity {
     Button btnSave;
 
 
-    MongoDatabase mongoDatabase;
-    MongoClient mongoClient;
-
-
-    public static final String TAG = "ServerAuthCodeActivity";
-    private static final int RC_GET_AUTH_CODE = 9003;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        MyApplication dbConfigs = new MyApplication();
+        Appid = dbConfigs.getAppid();
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_add_vehicle);
@@ -81,19 +77,18 @@ public class AddVehicle extends AppCompatActivity {
                 user_data.set_id(registration_num.toUpperCase());
                 user_data.setCity_of_purchase(city_of_reg.toUpperCase());
                 user_data.setPartition_key("1");
+                tracking_data.setTimestamp(new Date());
+                tracking_data.setReg_num(registration_num.toUpperCase());
+                tracking_data.setPartition_key("1");
+                tracking_data.setLat((double) 0);
+                tracking_data.setLon((double) 0);
+                tracking_data.set_id(new ObjectId());
 
                 showCustomDialog();
                 Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);
+
                 String partitionValue = "1";
-//                RealmConfiguration config = new RealmConfiguration.Builder()
-//                        .build();
-//                Realm realm = Realm.getInstance(config);
-//                realm.executeTransactionAsync(transactionRealm -> { // start a write transaction
-//                    transactionRealm.insert(task);
-//                    System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
-//                });
-                // Sync the realm db data with remote network
                 SyncConfiguration config = new SyncConfiguration.Builder(user, partitionValue)
                         .allowWritesOnUiThread(true)
                         .allowQueriesOnUiThread(true)
@@ -101,6 +96,7 @@ public class AddVehicle extends AppCompatActivity {
                 Realm backgroundThreadRealm = Realm.getInstance(config);
                 backgroundThreadRealm.executeTransaction(transactionRealm -> {
                     transactionRealm.insert(user_data);
+                    transactionRealm.insert(tracking_data);
                     System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
                 });
                 backgroundThreadRealm.close();

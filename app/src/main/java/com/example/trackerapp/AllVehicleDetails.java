@@ -3,51 +3,28 @@ package com.example.trackerapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.usage.NetworkStats;
 import android.content.Context;
 import android.content.Intent;
-import android.icu.text.DateFormatSymbols;
 import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkInfo;
 import android.net.NetworkRequest;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.trackerapp.Model.Tracking;
-import com.example.trackerapp.Model.UserQuery;
 import com.example.trackerapp.Model.Users;
 
-import org.bson.Document;
-import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.PojoCodecProvider;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import io.realm.Realm;
-import io.realm.RealmConfiguration;
-import io.realm.RealmQuery;
 import io.realm.RealmResults;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
 import io.realm.mongodb.Credentials;
-import io.realm.mongodb.RealmResultTask;
 import io.realm.mongodb.User;
-import io.realm.mongodb.mongo.MongoClient;
-import io.realm.mongodb.mongo.MongoCollection;
-import io.realm.mongodb.mongo.MongoDatabase;
-import io.realm.mongodb.mongo.iterable.FindIterable;
-import io.realm.mongodb.mongo.iterable.MongoCursor;
 import io.realm.mongodb.sync.ClientResetRequiredError;
 import io.realm.mongodb.sync.SyncConfiguration;
 import io.realm.mongodb.sync.SyncSession;
@@ -56,7 +33,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class AllVehicleDetails extends AppCompatActivity implements AdapterView.OnItemClickListener {
-    String Appid = "application-0-wfzcl";
+    String Appid;
     private App app;
     public Realm realm;
     public List<String> vehicles=new ArrayList<String>();
@@ -64,6 +41,8 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        MyApplication dbConfigs = new MyApplication();
+        Appid = dbConfigs.getAppid();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_vehicle_details);
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
