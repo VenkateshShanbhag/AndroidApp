@@ -34,7 +34,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.example.trackerapp.databinding.ActivityMaps2Binding;
+import com.example.trackerapp.databinding.ActivityShowAllVehiclesBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
@@ -57,7 +57,7 @@ import io.realm.mongodb.sync.SyncSession;
 public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private ActivityMaps2Binding binding;
+    private ActivityShowAllVehiclesBinding binding;
     String Appid;
     public List<RealmResults<Tracking>> tracking_data = new ArrayList<RealmResults<Tracking>>();
     double lat;
@@ -94,7 +94,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
 
         syncConfigurations(user);
 
-        binding = ActivityMaps2Binding.inflate(getLayoutInflater());
+        binding = ActivityShowAllVehiclesBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
