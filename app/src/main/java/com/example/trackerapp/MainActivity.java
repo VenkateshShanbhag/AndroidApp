@@ -1,6 +1,5 @@
 package com.example.trackerapp;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -14,13 +13,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import com.example.trackerapp.Model.Tracking;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,20 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
-import io.realm.Sort;
-import io.realm.mongodb.App;
-import io.realm.mongodb.AppConfiguration;
-import io.realm.mongodb.Credentials;
-import io.realm.mongodb.User;
-import io.realm.mongodb.sync.ClientResetRequiredError;
-import io.realm.mongodb.sync.SyncConfiguration;
-import io.realm.mongodb.sync.SyncSession;
 
 public class MainActivity extends AppCompatActivity  {
-//    Realm realm;
-//    EditText name;
-//    EditText reg_num;
-//    Button btnSave;
     Button allVehicles;
     Button addVehicle;
     Button trackAllVehicles;
@@ -116,31 +99,31 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     public void syncLatestData(){
-//        try {
-//            System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0");
-//            URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0");
-//            String readLine = null;
-//            HttpURLConnection conection = (HttpURLConnection) url.openConnection();
-//            conection.setRequestMethod("GET");
-//            int responseCode = conection.getResponseCode();
-//            if (responseCode == HttpURLConnection.HTTP_OK) {
-//                BufferedReader in = new BufferedReader(
-//                        new InputStreamReader(conection.getInputStream()));
-//                ArrayList<String> response = new ArrayList<>();
-//
-//                while ((readLine = in.readLine()) != null) {
-//                    response.add(readLine);
-//                }
-//                in.close();
-//                // TODO: Parse the result and display in maps
-//                JSONArray response_json_array = new JSONArray(response.get(0));
-//                System.out.println("JSON String Result " + response_json_array);
-//            }
-//
-//            System.out.println("|||||||||-LATLON TIMELINE-|||||||||");
-//        } catch (Exception e){
-//            System.out.println("EXCEPTION: "+e);
-//        }
+        try {
+            System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0");
+            URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0");
+            String readLine = null;
+            HttpURLConnection conection = (HttpURLConnection) url.openConnection();
+            conection.setRequestMethod("GET");
+            int responseCode = conection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(conection.getInputStream()));
+                ArrayList<String> response = new ArrayList<>();
+
+                while ((readLine = in.readLine()) != null) {
+                    response.add(readLine);
+                }
+                in.close();
+                // TODO: Parse the result and display in maps
+                JSONArray response_json_array = new JSONArray(response.get(0));
+                System.out.println("JSON String Result " + response_json_array);
+            }
+
+            System.out.println("|||||||||-LATLON TIMELINE-|||||||||");
+        } catch (Exception e){
+            System.out.println("EXCEPTION: "+e);
+        }
     }
 
     private void openVehicleDetailsPage() {
@@ -156,7 +139,7 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     private void openTrackVehicles() {
-        Intent intent = new Intent(this, MapsActivity2.class);
+        Intent intent = new Intent(this, ShowAllVehiclesActivity.class);
         Log.v("INFO>>","The track all vehicle activity started");
         startActivity(intent);
     }

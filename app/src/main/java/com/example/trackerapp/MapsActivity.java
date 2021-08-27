@@ -9,6 +9,10 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.LinkProperties;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -24,7 +28,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.example.trackerapp.databinding.ActivityMapsBinding;
+import com.example.trackerapp.databinding.ActivityShowAllVehiclesBinding;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -56,34 +60,28 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
-    private GoogleMap googleMapHomeFrag;
-    LatLng driverLatLng;
-    private ActivityMapsBinding binding;
+    private ActivityShowAllVehiclesBinding binding;
     String Appid;
-    private App app;
     public Realm realm;
     public double lat;
     public double lon;
-    public double geo_lat;
-    public double geo_lon;
     public List<Tracking> tracking_data = new ArrayList<Tracking>();
     public String[] registration_number;
     String value;
     Button refresh;
     Button show_timeline;
     String partitionKey = "1";
-    public List<String> vehicles = new ArrayList<String>();
     private JSONArray jsonObject;
     private GeofencingClient geofencingClient;
     List<String> latList = new ArrayList<String>();
     List<String> lonList = new ArrayList<String>();
     List<LatLng> latlonList = new ArrayList<LatLng>();
     int vehicleTimeline = 0;
-
+    MyApplication dbConfigs = new MyApplication();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        MyApplication dbConfigs = new MyApplication();
+
         Appid = dbConfigs.getAppid();
         super.onCreate(savedInstanceState);
         // Get the value passed from intent in previous activity.
@@ -119,7 +117,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         // MAP Activity
-        binding = ActivityMapsBinding.inflate(getLayoutInflater());
+        binding = ActivityShowAllVehiclesBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -184,7 +182,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void refreshPage() {
         Intent intent = getIntent();
-        finish();
         intent.putExtra("key", value);
         startActivity(intent);
     }
@@ -214,55 +211,54 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //                    System.out.println("FAILED to ADD GeoFence");
 //                }
 //            });
-        if(vehicleTimeline == 0){
-            try {
-                System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
-                URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
-                String readLine = null;
-                HttpURLConnection conection = (HttpURLConnection) url.openConnection();
-                conection.setRequestMethod("GET");
-                int responseCode = conection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader in = new BufferedReader(
-                            new InputStreamReader(conection.getInputStream()));
-                    ArrayList<String> response = new ArrayList<>();
+        try {
+            System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
+            URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
+            String readLine = null;
+            HttpURLConnection conection = (HttpURLConnection) url.openConnection();
+            conection.setRequestMethod("GET");
+            int responseCode = conection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(conection.getInputStream()));
+                ArrayList<String> response = new ArrayList<>();
 
-                    while ((readLine = in.readLine()) != null) {
-                        response.add(readLine);
-                    }
-                    in.close();
-                    // TODO: Parse the result and display in maps
-                    JSONArray response_json_array = new JSONArray(response.get(0));
-                    System.out.println("JSON String Result " + response_json_array.get(0));
-
-                    for(int i = 0; i<response_json_array.length(); i++){
-                        String lat = response_json_array.getJSONObject(i).optString("lat");
-                        JSONObject lat_json = new JSONObject(lat);
-                        latList.add((String) lat_json.get("$numberDouble"));
-                        String lon = response_json_array.getJSONObject(i).optString("lon");
-                        JSONObject lon_json = new JSONObject(lon);
-                        lonList.add((String) lon_json.get("$numberDouble"));
-                    }
-
-                    for(int i = 0; i< latList.size(); i++) {
-                        double lat1 = Double.parseDouble(latList.get(i));
-                        double lon1 = Double.parseDouble(lonList.get(i));
-                        LatLng latlan = new LatLng(lat1,lon1);
-                        latlonList.add(latlan);
-                    }
-                    System.out.println(latlonList);
+                while ((readLine = in.readLine()) != null) {
+                    response.add(readLine);
                 }
-                PolylineOptions opts = new PolylineOptions();
-                for (LatLng location : latlonList) {
-                    opts.add(location).clickable(true);
+                in.close();
+                // TODO: Parse the result and display in maps
+                JSONArray response_json_array = new JSONArray(response.get(0));
+                System.out.println("JSON String Result " + response_json_array.get(0));
+
+                for(int i = 0; i<response_json_array.length(); i++){
+                    String lat = response_json_array.getJSONObject(i).optString("lat");
+                    JSONObject lat_json = new JSONObject(lat);
+                    latList.add((String) lat_json.get("$numberDouble"));
+                    String lon = response_json_array.getJSONObject(i).optString("lon");
+                    JSONObject lon_json = new JSONObject(lon);
+                    lonList.add((String) lon_json.get("$numberDouble"));
                 }
 
-                Polyline polyline1 = googleMap.addPolyline(opts);
-                System.out.println("|||||||||-LATLON TIMELINE-|||||||||");
-            } catch (Exception e){
-                System.out.println("EXCEPTION: "+e);
+                for(int i = 0; i< latList.size(); i++) {
+                    double lat1 = Double.parseDouble(latList.get(i));
+                    double lon1 = Double.parseDouble(lonList.get(i));
+                    LatLng latlan = new LatLng(lat1,lon1);
+                    latlonList.add(latlan);
+                }
+                System.out.println(latlonList);
             }
+            PolylineOptions opts = new PolylineOptions();
+            for (LatLng location : latlonList) {
+                opts.add(location).clickable(true);
+            }
+
+            Polyline polyline1 = googleMap.addPolyline(opts);
+            System.out.println("|||||||||-LATLON TIMELINE-|||||||||");
+        } catch (Exception e){
+            System.out.println("EXCEPTION: "+e);
         }
+
 
 
         mMap = googleMap;

@@ -54,7 +54,7 @@ import io.realm.mongodb.sync.ClientResetRequiredError;
 import io.realm.mongodb.sync.SyncConfiguration;
 import io.realm.mongodb.sync.SyncSession;
 
-public class MapsActivity2 extends FragmentActivity implements OnMapReadyCallback {
+public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ActivityMaps2Binding binding;
@@ -171,9 +171,9 @@ public class MapsActivity2 extends FragmentActivity implements OnMapReadyCallbac
                 Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT);
         GeofencingRequest geofencingRequest = geoFenceHelaper.getGeofencingRequest(geofence);
 //        PendingIntent pendingIntent = geoFenceHelaper.getPendingIntent();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            return;
+//        }
 //        geofencingClient.addGeofences(geofencingRequest, pendingIntent)
 //        .addOnSuccessListener(new OnSuccessListener<Void>() {
 //            @Override
