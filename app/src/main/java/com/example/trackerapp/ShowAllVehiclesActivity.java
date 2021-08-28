@@ -65,6 +65,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     String reg_num;
     Realm backgroundThreadRealm;
     Button refresh;
+    Button add_vehicle;
     private GeofencingClient geofencingClient;
     private GeoFenceHelaper geoFenceHelaper;
 
@@ -107,6 +108,15 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
             @Override
             public void onClick(View view) {
                 refreshPage();
+            }
+        });
+
+        add_vehicle = findViewById(R.id.add_vehicle);
+
+        add_vehicle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openAddVehiclePage();
             }
         });
 
@@ -206,6 +216,12 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         Canvas canvas = new Canvas(bitmap);
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    private void openAddVehiclePage() {
+        Intent intent = new Intent(this, AddVehicle.class);
+        Log.v("INFO>>","The Add vehicle activity started");
+        startActivity(intent);
     }
 
 }

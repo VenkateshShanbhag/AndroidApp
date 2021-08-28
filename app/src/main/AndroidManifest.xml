@@ -33,9 +33,9 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity
-            android:name=".ShowAllVehiclesActivity"
-            android:label="@string/title_activity_maps2" />
+<!--        <activity-->
+<!--            android:name=".ShowAllVehiclesActivity"-->
+<!--            android:label="@string/title_activity_maps2" />-->
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps" />
@@ -43,7 +43,7 @@
         <activity android:name=".AddVehicle" />
         <activity android:name=".AllVehicleDetails" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ShowAllVehiclesActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
