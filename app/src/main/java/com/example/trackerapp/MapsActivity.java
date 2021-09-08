@@ -8,12 +8,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -29,6 +31,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.trackerapp.databinding.ActivityMapsBinding;
+import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -43,9 +46,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
+import io.realm.RealmResults;
 import io.realm.Sort;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
@@ -58,13 +64,12 @@ import io.realm.mongodb.sync.SyncSession;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnPolylineClickListener{
     private GoogleMap mMap;
     private GoogleMap googleMapHomeFrag;
     LatLng driverLatLng;
     private ActivityMapsBinding binding;
     String Appid;
-    private App app;
     public Realm realm;
     public double lat;
     public double lon;
@@ -74,15 +79,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Button refresh;
     Button show_timeline;
     String partitionKey = "1";
-    public List<String> vehicles = new ArrayList<String>();
-    private JSONArray jsonObject;
-    private GeofencingClient geofencingClient;
     List<String> latList = new ArrayList<String>();
     List<String> lonList = new ArrayList<String>();
     List<LatLng> latlonList = new ArrayList<LatLng>();
     int vehicleTimeline = 0;
     MyApplication dbConfigs = new MyApplication();
-    int networkFlag = 0;
+    Realm backgroundThreadRealm;
+    Date timerange;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,15 +119,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         User user = app.currentUser();
 
         syncConfigurations(user);
-        //GeoFence Activity
-//        geofencingClient = LocationServices.getGeofencingClient(this);
-
-
-
+        
         // MAP Activity
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -167,10 +166,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
                 .build();
 
-        Realm backgroundThreadRealm = Realm.getInstance(config);
-        backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
+        backgroundThreadRealm = Realm.getInstance(config);
+
+        backgroundThreadRealm.addChangeListener(new RealmChangeListener<Realm>() {
             @Override
-            public void execute(@NonNull Realm realm) {
+            public void onChange(Realm realm) {
                 Tracking results = realm.where(Tracking.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
                 System.out.println(results);
                 tracking_data.add(results);
@@ -181,11 +181,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             lat = tracking_data.get(i).getLat();
             lon = tracking_data.get(i).getLon();
         }
-
         backgroundThreadRealm.close();
     }
 
     private void refreshPage() {
+
         Intent intent = getIntent();
         intent.putExtra("key", value);
         startActivity(intent);
@@ -193,29 +193,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-//        geofenceList.add(new Geofence.Builder()
-//                .setRequestId("GeoFence 01")
-//                .setCircularRegion(35, 75, 500f)
-//                .setExpirationDuration(60 * 60 * 1000)
-//                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
-//                .build());
-//        System.out.println(geofenceList);
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            return;
-//        }
-//        geofencingClient.addGeofences(getGeofencingRequest(), null)
-//            .addOnSuccessListener(this, new OnSuccessListener<Void>() {
-//                @Override
-//                public void onSuccess(Void aVoid) {
-//                    System.out.println("GeoFence Added");
-//                }
-//            })
-//            .addOnFailureListener(this, new OnFailureListener() {
-//                @Override
-//                public void onFailure(@NonNull Exception e) {
-//                    System.out.println("FAILED to ADD GeoFence");
-//                }
-//            });
         try {
             System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
             URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
@@ -255,26 +232,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
             PolylineOptions opts = new PolylineOptions();
             for (LatLng location : latlonList) {
-                opts.add(location).clickable(true);
+                opts.add(location)
+                    .color(Color.BLUE)
+                    .width(10)
+                    .geodesic(true);
             }
 
-            Polyline polyline1 = googleMap.addPolyline(opts);
-            System.out.println("|||||||||-LATLON TIMELINE-|||||||||");
+            Polyline polyline = googleMap.addPolyline(opts);
+            polyline.setClickable(true);
         } catch (Exception e){
             System.out.println("EXCEPTION: "+e);
         }
 
-
-
         mMap = googleMap;
-        // Add a marker in Sydney and move the camera
-        LatLng custom = new LatLng(lat, lon);
+        LatLng custom = new LatLng(Double.parseDouble(latList.get(latList.size()-1)), Double.parseDouble(lonList.get(lonList.size()-1)));
         MarkerOptions marker = new MarkerOptions().position(custom).title(registration_number[1].toUpperCase());
         marker.icon(bitmapDescriptorFromVector(this, R.mipmap.car_icon_03));
         mMap.addMarker(marker);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(custom));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(12));
 
+        googleMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
+            @Override
+            public void onPolylineClick(@NonNull Polyline polyline) {
+                System.out.println(">>>>>>>>>>> "+polyline.getPoints().get(latList.size()-1));
+                startDialogActivity();
+            }
+        });
     }
 
     private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectorResId) {
@@ -286,4 +270,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
+    @Override
+    public void onPolylineClick(@NonNull Polyline polyline) {
+        System.out.println("Polyline clicked !!!!!!");
+    }
+
+    public void startDialogActivity(){
+        Intent intent = new Intent(this, DialogActivity.class);
+        Log.v("INFO>>","The track all vehicle activity started");
+        intent.putExtra("key", (Parcelable) tracking_data);
+        startActivity(intent);
+    }
 }

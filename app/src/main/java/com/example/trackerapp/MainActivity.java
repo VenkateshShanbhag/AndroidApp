@@ -12,8 +12,15 @@ import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.RemoteMessage;
 
 import org.json.JSONArray;
 
@@ -24,6 +31,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.annotations.NonNull;
 import io.realm.Realm;
 
 public class MainActivity extends AppCompatActivity  {
@@ -35,36 +43,35 @@ public class MainActivity extends AppCompatActivity  {
     List<String> latList = new ArrayList<String>();
     List<String> lonList = new ArrayList<String>();
     List<LatLng> latlonList = new ArrayList<LatLng>();
-    
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ConnectivityManager connectivityManager = getSystemService(ConnectivityManager.class);
-        connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(Network network) {
-                networkFlag = 1;
-                syncLatestData();
-
-                System.out.println("!!!!!!!!The default network is now: " + network);
-            }
-            @Override
-            public void onLost(Network network) {
-                System.out.println("!!!!!!!!The application no longer has a default network. The last default network was " + network);
-            }
-
-            @Override
-            public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-                System.out.println("!!!!!!!!The default network changed capabilities: " + networkCapabilities);
-            }
-
-            @Override
-            public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
-                System.out.println("!!!!!!!!The default network changed link properties: " + linkProperties);
-            }
-        });
+//        ConnectivityManager connectivityManager = getSystemService(ConnectivityManager.class);
+//        connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
+//            @Override
+//            public void onAvailable(Network network) {
+//                networkFlag = 1;
+//                syncLatestData();
+//
+//                System.out.println("!!!!!!!!The default network is now: " + network);
+//            }
+//            @Override
+//            public void onLost(Network network) {
+//                System.out.println("!!!!!!!!The application no longer has a default network. The last default network was " + network);
+//            }
+//
+//            @Override
+//            public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
+//                System.out.println("!!!!!!!!The default network changed capabilities: " + networkCapabilities);
+//            }
+//
+//            @Override
+//            public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
+//                System.out.println("!!!!!!!!The default network changed link properties: " + linkProperties);
+//            }
+//        });
 
         System.out.println("!!!!!!! NETWORK STATUS - !!!!!!!! - "+networkFlag);
         setContentView(R.layout.activity_main);
@@ -96,7 +103,25 @@ public class MainActivity extends AppCompatActivity  {
                 openTrackVehicles();
             }
         });
+        runtimeEnableAutoInit();
+
+        FirebaseMessaging.getInstance().subscribeToTopic("GeofenceTrigger")
+            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@io.reactivex.annotations.NonNull Task<Void> task) {
+                    String msg = "Subscribed to GeofenceTrigger topic";
+                    if (!task.isSuccessful()) {
+                        msg = "Msg subscription failed";
+                    }
+                    System.out.println("Show Custom Dialog started");
+                    Log.d("FCM", msg);
+                    System.out.println(msg);
+                    Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                }
+            });
     }
+
+
 
     public void syncLatestData(){
         try {
@@ -142,5 +167,11 @@ public class MainActivity extends AppCompatActivity  {
         Intent intent = new Intent(this, ShowAllVehiclesActivity.class);
         Log.v("INFO>>","The track all vehicle activity started");
         startActivity(intent);
+    }
+
+    public void runtimeEnableAutoInit() {
+        // [START fcm_runtime_enable_auto_init]
+        FirebaseMessaging.getInstance().setAutoInitEnabled(true);
+        // [END fcm_runtime_enable_auto_init]
     }
 }
