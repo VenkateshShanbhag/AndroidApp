@@ -13,7 +13,6 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.trackerapp.Model.Tracking;
-import com.example.trackerapp.Model.Users;
 
 import org.bson.types.ObjectId;
 
@@ -65,7 +64,7 @@ public class AddVehicle extends AppCompatActivity {
 
         User user = app.currentUser();
 
-        Users user_data = new Users();
+        //Users user_data = new Users();
         Tracking tracking_data = new Tracking();
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,16 +72,14 @@ public class AddVehicle extends AppCompatActivity {
                 String owner_name = name.getText().toString();
                 String registration_num = reg_num.getText().toString();
                 String city_of_reg = city.getText().toString();
-                user_data.setOwner_name(owner_name.toUpperCase());
-                user_data.set_id(registration_num.toUpperCase());
-                user_data.setCity_of_purchase(city_of_reg.toUpperCase());
-                user_data.setPartition_key("1");
                 tracking_data.setTimestamp(new Date());
                 tracking_data.setReg_num(registration_num.toUpperCase());
                 tracking_data.setPartition_key("1");
                 tracking_data.setLat((double) 0);
                 tracking_data.setLon((double) 0);
                 tracking_data.set_id(new ObjectId());
+                tracking_data.setCity(city_of_reg);
+                tracking_data.setOwner(owner_name);
 
                 showCustomDialog();
                 Intent i = new Intent(getApplicationContext(), MainActivity.class);
@@ -95,7 +92,6 @@ public class AddVehicle extends AppCompatActivity {
                         .build();
                 Realm backgroundThreadRealm = Realm.getInstance(config);
                 backgroundThreadRealm.executeTransaction(transactionRealm -> {
-                    transactionRealm.insert(user_data);
                     transactionRealm.insert(tracking_data);
                     System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
                 });

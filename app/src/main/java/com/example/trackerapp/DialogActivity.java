@@ -10,22 +10,36 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.trackerapp.Model.Tracking;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import io.realm.Realm;
+import io.realm.Sort;
+import io.realm.mongodb.User;
+import io.realm.mongodb.sync.SyncConfiguration;
+
 public class DialogActivity extends AppCompatActivity {
 
     private String value;
+    Realm backgroundThreadRealm;
+    public String registration_number;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            value = extras.getString("key");
+            registration_number = extras.getString("key");
             Log.v("Intent Value", value);
         }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dialog);
+        System.out.println("!!!!!!!!!!!!!>>>>>>>>>>>>>>>>>>>>>>>>>"+registration_number);
         TextView textView = (TextView) findViewById(R.id.display_msg);
         textView.setText(value);
     }
+
 
 //    void showCustomDialog() {
 //        //before inflating the custom alert dialog layout, we will get the current activity viewgroup

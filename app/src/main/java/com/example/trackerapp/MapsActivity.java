@@ -1,6 +1,7 @@
 package com.example.trackerapp;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
@@ -17,8 +18,11 @@ import android.net.NetworkCapabilities;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.example.trackerapp.Model.Tracking;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,6 +39,7 @@ import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -71,9 +76,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ActivityMapsBinding binding;
     String Appid;
     public Realm realm;
-    public double lat;
-    public double lon;
-    public List<Tracking> tracking_data = new ArrayList<Tracking>();
     public String[] registration_number;
     String value;
     Button refresh;
@@ -86,6 +88,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     MyApplication dbConfigs = new MyApplication();
     Realm backgroundThreadRealm;
     Date timerange;
+    App app;
+    public List<Tracking> tracking_data = new ArrayList<Tracking>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,9 +103,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.v("Intent Value", value);
         }
         registration_number = value.split(" - ", 2);
-        System.out.println("REGISTRATION NUMBER" + registration_number[1].toUpperCase());
-
-        /* Sync Session */
         SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
             @Override
             public void onClientReset(SyncSession session, ClientResetRequiredError error) {
@@ -112,13 +113,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         };
 
         /* Initialize app configuration and login */
-        App app = new App(new AppConfiguration.Builder(Appid)
+        app = new App(new AppConfiguration.Builder(Appid)
                 .defaultClientResetHandler(handler)
                 .build());
         app.login(Credentials.anonymous());
-        User user = app.currentUser();
-
-        syncConfigurations(user);
         
         // MAP Activity
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
@@ -156,33 +154,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void showVehicleTimeline() throws IOException, JSONException {
         vehicleTimeline = 1;
-        refreshPage();
+        startDialogActivity();
     }
 
 
-    public void syncConfigurations(User user) {
-        SyncConfiguration config = new SyncConfiguration.Builder(
-                user,
-                partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
-                .build();
 
-        backgroundThreadRealm = Realm.getInstance(config);
-
-        backgroundThreadRealm.addChangeListener(new RealmChangeListener<Realm>() {
-            @Override
-            public void onChange(Realm realm) {
-                Tracking results = realm.where(Tracking.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
-                System.out.println(results);
-                tracking_data.add(results);
-            }
-        });
-
-        for (int i = 0; i < tracking_data.size(); i++) {
-            lat = tracking_data.get(i).getLat();
-            lon = tracking_data.get(i).getLon();
-        }
-        backgroundThreadRealm.close();
-    }
 
     private void refreshPage() {
 
@@ -193,8 +169,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         try {
-            System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
+            // System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
             URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
             String readLine = null;
             HttpURLConnection conection = (HttpURLConnection) url.openConnection();
@@ -211,7 +188,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 in.close();
                 // TODO: Parse the result and display in maps
                 JSONArray response_json_array = new JSONArray(response.get(0));
-                System.out.println("JSON String Result " + response_json_array.get(0));
 
                 for(int i = 0; i<response_json_array.length(); i++){
                     String lat = response_json_array.getJSONObject(i).optString("lat");
@@ -228,7 +204,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     LatLng latlan = new LatLng(lat1,lon1);
                     latlonList.add(latlan);
                 }
-                System.out.println(latlonList);
             }
             PolylineOptions opts = new PolylineOptions();
             for (LatLng location : latlonList) {
@@ -250,12 +225,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         marker.icon(bitmapDescriptorFromVector(this, R.mipmap.car_icon_03));
         mMap.addMarker(marker);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(custom));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(12));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(18));
 
         googleMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick(@NonNull Polyline polyline) {
-                System.out.println(">>>>>>>>>>> "+polyline.getPoints().get(latList.size()-1));
                 startDialogActivity();
             }
         });
@@ -275,10 +249,58 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         System.out.println("Polyline clicked !!!!!!");
     }
 
-    public void startDialogActivity(){
-        Intent intent = new Intent(this, DialogActivity.class);
-        Log.v("INFO>>","The track all vehicle activity started");
-        intent.putExtra("key", (Parcelable) tracking_data);
-        startActivity(intent);
+    private void startDialogActivity() {
+        SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
+            @Override
+            public void onClientReset(SyncSession session, ClientResetRequiredError error) {
+                Log.e("EXAMPLE", "Client Reset required for: " +
+                        session.getConfiguration().getServerUrl() + " for error: " +
+                        error.toString());
+            }
+        };
+
+        /* Initialize app configuration and login */
+        App app = new App(new AppConfiguration.Builder(Appid)
+                .defaultClientResetHandler(handler)
+                .build());
+        app.login(Credentials.anonymous());
+        User user = app.currentUser();
+        String partitionKey = "1";
+        SyncConfiguration config = new SyncConfiguration.Builder(
+                user,
+                partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
+                .build();
+
+        backgroundThreadRealm = Realm.getInstance(config);
+        backgroundThreadRealm.executeTransaction(transactionRealm -> {
+            Tracking results = backgroundThreadRealm.where(Tracking.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
+            tracking_data.add(results);
+        });
+
+//        for (int i = 0; i < tracking_data.size(); i++) {
+//            Double lat = tracking_data.get(i).getLat();
+//            Double lon = tracking_data.get(i).getLon();
+//        }
+
+        backgroundThreadRealm.close();
+        //before inflating the custom alert dialog layout, we will get the current activity viewgroup
+        ViewGroup viewGroup = findViewById(android.R.id.content);
+
+        //then we will inflate the custom alert dialog xml that we created
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.activity_dialog, viewGroup, false);
+
+        //Now we need an AlertDialog.Builder object
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        TextView textView = (TextView) findViewById(R.id.display_msg);
+
+        // TODO: Set the timeline data for the registration number
+        textView.setText("");
+
+        //setting the view of the builder to our custom view that we already inflated
+        builder.setView(dialogView);
+
+        //finally creating the alert dialog and displaying it
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 }

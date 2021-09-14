@@ -14,7 +14,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.example.trackerapp.Model.Users;
+import com.example.trackerapp.Model.Tracking;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +97,7 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(@NonNull Realm realm) {
-                RealmResults<Users> results = realm.where(Users.class).findAll();
+                RealmResults<Tracking> results = realm.where(Tracking.class).findAll();
                 for (int i = 0; i < results.size(); i++) {
                     vehicles.add(results.get(i).toString());
                 }

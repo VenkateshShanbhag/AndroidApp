@@ -22,6 +22,10 @@ public class Tracking extends RealmObject {
 
     private String reg_num;
 
+    private String owner;
+
+    private String city;
+
     // Standard getters & setters
     public ObjectId get_id() { return _id; }
     public void set_id(ObjectId _id) { this._id = _id; }
@@ -40,4 +44,16 @@ public class Tracking extends RealmObject {
 
     public String getReg_num() { return reg_num; }
     public void setReg_num(String reg_num) { this.reg_num = reg_num; }
+
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
+
+    public Tracking() {}
+    @Override
+    public String toString() {
+        return owner + " - " + reg_num;
+    }
 }

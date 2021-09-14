@@ -30,7 +30,7 @@
         android:id="@+id/vehicle_details"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Show all vehicles" />
+        android:text="VEHICLE LIST" />
 
 <!--    <Button-->
 <!--        android:layout_width="match_parent"-->
@@ -42,13 +42,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/add_vehicle"
-        android:text="Add new vehicle" />
+        android:text="ADD VEHICLE" />
 
     <Button
         android:id="@+id/track_vehicles"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Track all vehicle" />
+        android:text="TRACK ALL" />
 
 
 </LinearLayout>

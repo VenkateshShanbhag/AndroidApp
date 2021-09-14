@@ -28,6 +28,7 @@ import android.widget.Toast;
 import com.example.trackerapp.Model.Tracking;
 import com.example.trackerapp.databinding.ActivityShowAllVehiclesBinding;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -90,6 +91,10 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     List<String> timestampList = new ArrayList<String>();
     Tracking tracking=null;
     boolean inCircle;
+    Location currentLocation;
+    private boolean locationPermissionGranted;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+
 
 
     @Override
@@ -150,10 +155,12 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         });
     }
 
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.clear();
+        
         for (int i = 0; i < tracking_data.get(0).size(); i++) {
             lat = tracking_data.get(0).get(i).getLat();
             lon = tracking_data.get(0).get(i).getLon();
@@ -272,7 +279,6 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
                 BufferedReader in = new BufferedReader(
                         new InputStreamReader(conection.getInputStream()));
                 ArrayList<String> response = new ArrayList<>();
-
                 while ((readLine = in.readLine()) != null) {
                     response.add(readLine);
                 }
@@ -300,7 +306,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
                     timestampList.add((String)timestamp_long.get("$numberLong"));
                 }
                 updateLatestLatLon(user);
-                System.out.println(latList);
+                System.out.println(">>>>>>>"+latList);
                 System.out.println(lonList);
                 System.out.println(regNumList);
                 System.out.println(timestampList);
@@ -319,14 +325,14 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
                 double lat1 = Double.parseDouble(latList.get(i));
                 double lon1 = Double.parseDouble(lonList.get(i));
                 long timestamp = Long.parseLong(timestampList.get(i));
-                Date d = new Date(timestamp);
+                Date date = new Date(timestamp);
                 String reg_num = regNumList.get(i);
                 tracking = transactionRealm.where(Tracking.class).equalTo("reg_num",reg_num).findFirst();
                 if(tracking == null) {
                     tracking = new Tracking();  // or realm.createObject(Person.class, id);
                     tracking.set_id(new ObjectId());
                 }
-                tracking.setTimestamp(d);
+                tracking.setTimestamp(date);
                 tracking.setPartition_key("1");
                 tracking.setReg_num(reg_num);
                 tracking.setLat(lat1);
