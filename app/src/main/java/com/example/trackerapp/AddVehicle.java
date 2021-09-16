@@ -12,13 +12,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.example.trackerapp.Model.Tracking;
+import com.example.trackerapp.Model.TrackingGeoSpacial_location;
+import com.example.trackerapp.Model.TrackingGeoSpacial;
 
 import org.bson.types.ObjectId;
 
 import java.util.Date;
 
 import io.realm.Realm;
+import io.realm.RealmList;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
 import io.realm.mongodb.Credentials;
@@ -32,7 +34,7 @@ public class AddVehicle extends AppCompatActivity {
     EditText reg_num;
     EditText city;
     Button btnSave;
-
+    MyApplication dbConfigs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,22 +67,30 @@ public class AddVehicle extends AppCompatActivity {
         User user = app.currentUser();
 
         //Users user_data = new Users();
-        Tracking tracking_data = new Tracking();
+        TrackingGeoSpacial tracking_data = new TrackingGeoSpacial();
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String owner_name = name.getText().toString();
                 String registration_num = reg_num.getText().toString();
                 String city_of_reg = city.getText().toString();
+
+                /* Geospatial object */
+                TrackingGeoSpacial_location location = new TrackingGeoSpacial_location();
+                RealmList<Double> latlonlist = new RealmList<>();
+                latlonlist.add(dbConfigs.getStatic_lat());
+                latlonlist.add(dbConfigs.getStatic_lon());
+                location.setCoordinates(latlonlist);
+                location.setType("Point");
+
+                /* Tracking object */
                 tracking_data.setTimestamp(new Date());
                 tracking_data.setReg_num(registration_num.toUpperCase());
                 tracking_data.setPartition_key("1");
-                tracking_data.setLat((double) 0);
-                tracking_data.setLon((double) 0);
+                tracking_data.setLocation(location);
                 tracking_data.set_id(new ObjectId());
                 tracking_data.setCity(city_of_reg);
                 tracking_data.setOwner(owner_name);
-
                 showCustomDialog();
                 Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);

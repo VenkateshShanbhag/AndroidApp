@@ -11,12 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.net.ConnectivityManager;
-import android.net.LinkProperties;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,9 +19,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.trackerapp.Model.Tracking;
+import com.example.trackerapp.Model.TrackingGeoSpacial;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.location.*;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -35,11 +29,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.trackerapp.databinding.ActivityMapsBinding;
-import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,15 +40,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import io.realm.Realm;
-import io.realm.RealmChangeListener;
-import io.realm.RealmResults;
 import io.realm.Sort;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
@@ -89,7 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Realm backgroundThreadRealm;
     Date timerange;
     App app;
-    public List<Tracking> tracking_data = new ArrayList<Tracking>();
+    public List<TrackingGeoSpacial> tracking_data = new ArrayList<TrackingGeoSpacial>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,7 +160,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         try {
-            // System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
             URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
             String readLine = null;
             HttpURLConnection conection = (HttpURLConnection) url.openConnection();
@@ -273,7 +261,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         backgroundThreadRealm = Realm.getInstance(config);
         backgroundThreadRealm.executeTransaction(transactionRealm -> {
-            Tracking results = backgroundThreadRealm.where(Tracking.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
+            TrackingGeoSpacial results = backgroundThreadRealm.where(TrackingGeoSpacial.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
             tracking_data.add(results);
         });
 

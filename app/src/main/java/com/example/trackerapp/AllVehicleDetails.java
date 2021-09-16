@@ -15,6 +15,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.example.trackerapp.Model.Tracking;
+import com.example.trackerapp.Model.TrackingGeoSpacial;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +98,7 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(@NonNull Realm realm) {
-                RealmResults<Tracking> results = realm.where(Tracking.class).findAll();
+                RealmResults<TrackingGeoSpacial> results = realm.where(TrackingGeoSpacial.class).findAll();
                 for (int i = 0; i < results.size(); i++) {
                     vehicles.add(results.get(i).toString());
                 }

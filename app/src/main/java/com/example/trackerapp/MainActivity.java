@@ -1,6 +1,8 @@
 package com.example.trackerapp;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -47,31 +49,6 @@ public class MainActivity extends AppCompatActivity  {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-//        ConnectivityManager connectivityManager = getSystemService(ConnectivityManager.class);
-//        connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
-//            @Override
-//            public void onAvailable(Network network) {
-//                networkFlag = 1;
-//                syncLatestData();
-//
-//                System.out.println("!!!!!!!!The default network is now: " + network);
-//            }
-//            @Override
-//            public void onLost(Network network) {
-//                System.out.println("!!!!!!!!The application no longer has a default network. The last default network was " + network);
-//            }
-//
-//            @Override
-//            public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-//                System.out.println("!!!!!!!!The default network changed capabilities: " + networkCapabilities);
-//            }
-//
-//            @Override
-//            public void onLinkPropertiesChanged(Network network, LinkProperties linkProperties) {
-//                System.out.println("!!!!!!!!The default network changed link properties: " + linkProperties);
-//            }
-//        });
 
         System.out.println("!!!!!!! NETWORK STATUS - !!!!!!!! - "+networkFlag);
         setContentView(R.layout.activity_main);
@@ -123,33 +100,32 @@ public class MainActivity extends AppCompatActivity  {
 
 
 
-    public void syncLatestData(){
-        try {
-            System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0");
-            URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0");
-            String readLine = null;
-            HttpURLConnection conection = (HttpURLConnection) url.openConnection();
-            conection.setRequestMethod("GET");
-            int responseCode = conection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(conection.getInputStream()));
-                ArrayList<String> response = new ArrayList<>();
-
-                while ((readLine = in.readLine()) != null) {
-                    response.add(readLine);
-                }
-                in.close();
-                // TODO: Parse the result and display in maps
-                JSONArray response_json_array = new JSONArray(response.get(0));
-                System.out.println("JSON String Result " + response_json_array);
-            }
-
-            System.out.println("|||||||||-LATLON TIMELINE-|||||||||");
-        } catch (Exception e){
-            System.out.println("EXCEPTION: "+e);
-        }
-    }
+//    public void syncLatestData(){
+//        try {
+//            URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0");
+//            String readLine = null;
+//            HttpURLConnection conection = (HttpURLConnection) url.openConnection();
+//            conection.setRequestMethod("GET");
+//            int responseCode = conection.getResponseCode();
+//            if (responseCode == HttpURLConnection.HTTP_OK) {
+//                BufferedReader in = new BufferedReader(
+//                        new InputStreamReader(conection.getInputStream()));
+//                ArrayList<String> response = new ArrayList<>();
+//
+//                while ((readLine = in.readLine()) != null) {
+//                    response.add(readLine);
+//                }
+//                in.close();
+//                // TODO: Parse the result and display in maps
+//                JSONArray response_json_array = new JSONArray(response.get(0));
+//                System.out.println("JSON String Result " + response_json_array);
+//            }
+//
+//            System.out.println("|||||||||-LATLON TIMELINE-|||||||||");
+//        } catch (Exception e){
+//            System.out.println("EXCEPTION: "+e);
+//        }
+//    }
 
     private void openVehicleDetailsPage() {
         Intent intent = new Intent(this, AllVehicleDetails.class);

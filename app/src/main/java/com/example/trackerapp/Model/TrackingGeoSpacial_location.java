@@ -6,7 +6,7 @@ import io.realm.annotations.RealmClass;
 import io.realm.annotations.Required;
 
 @RealmClass(embedded = true)
-public class Test_location extends RealmObject {
+public class TrackingGeoSpacial_location extends RealmObject {
     @Required
     private RealmList<Double> coordinates;
     private String type;

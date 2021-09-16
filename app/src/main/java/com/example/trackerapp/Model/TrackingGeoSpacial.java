@@ -5,12 +5,12 @@ import io.realm.annotations.PrimaryKey;
 
 import java.util.Date;
 import org.bson.types.ObjectId;
-public class Test extends RealmObject {
+public class TrackingGeoSpacial extends RealmObject {
     @PrimaryKey
     private ObjectId _id;
     private Date Timestamp;
     private String city;
-    private Test_location location;
+    private TrackingGeoSpacial_location location;
     private String owner;
     private String partition_key;
     private String reg_num;
@@ -21,12 +21,18 @@ public class Test extends RealmObject {
     public void setTimestamp(Date Timestamp) { this.Timestamp = Timestamp; }
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
-    public Test_location getLocation() { return location; }
-    public void setLocation(Test_location location) { this.location = location; }
+    public TrackingGeoSpacial_location getLocation() { return location; }
+    public void setLocation(TrackingGeoSpacial_location location) { this.location = location; }
     public String getOwner() { return owner; }
     public void setOwner(String owner) { this.owner = owner; }
     public String getPartition_key() { return partition_key; }
     public void setPartition_key(String partition_key) { this.partition_key = partition_key; }
     public String getReg_num() { return reg_num; }
     public void setReg_num(String reg_num) { this.reg_num = reg_num; }
+
+    public TrackingGeoSpacial() {}
+    @Override
+    public String toString() {
+        return owner + " - " + reg_num;
+    }
 }
