@@ -4,9 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,7 +19,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.trackerapp.Model.TrackingGeoSpacial;
+import com.example.trackerapp.Model.TrackingGeoSpatial;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -60,8 +60,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnPolylineClickListener{
     private GoogleMap mMap;
-    private GoogleMap googleMapHomeFrag;
-    LatLng driverLatLng;
     private ActivityMapsBinding binding;
     String Appid;
     public Realm realm;
@@ -69,7 +67,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String value;
     Button refresh;
     Button show_timeline;
-    String partitionKey = "1";
     List<String> latList = new ArrayList<String>();
     List<String> lonList = new ArrayList<String>();
     List<LatLng> latlonList = new ArrayList<LatLng>();
@@ -78,12 +75,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Realm backgroundThreadRealm;
     Date timerange;
     App app;
-    public List<TrackingGeoSpacial> tracking_data = new ArrayList<TrackingGeoSpacial>();
+    public List<TrackingGeoSpatial> tracking_data = new ArrayList<TrackingGeoSpatial>();
+    SupportMapFragment mapFragment;
+    String timeline_url;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
+        timeline_url = dbConfigs.getTimeline_url();
         Appid = dbConfigs.getAppid();
+
         super.onCreate(savedInstanceState);
         // Get the value passed from intent in previous activity.
         Bundle extras = getIntent().getExtras();
@@ -111,7 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
@@ -150,24 +150,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private void refreshPage() {
+        final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        mapFragment.getMapAsync(this);
+        ft.detach(mapFragment);
+        ft.attach(mapFragment);
 
-        Intent intent = getIntent();
-        intent.putExtra("key", value);
-        startActivity(intent);
+
+
+
+//        Intent intent = getIntent();
+//        intent.putExtra("key", value);
+//        startActivity(intent);
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
         try {
-            URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0?reg_num="+registration_number[1].toUpperCase());
+
+            // Timeline data
+            URL url = new URL(timeline_url+registration_number[1].toUpperCase());
             String readLine = null;
-            HttpURLConnection conection = (HttpURLConnection) url.openConnection();
-            conection.setRequestMethod("GET");
-            int responseCode = conection.getResponseCode();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(
-                        new InputStreamReader(conection.getInputStream()));
+                        new InputStreamReader(connection.getInputStream()));
                 ArrayList<String> response = new ArrayList<>();
 
                 while ((readLine = in.readLine()) != null) {
@@ -177,7 +186,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 // TODO: Parse the result and display in maps
                 JSONArray response_json_array = new JSONArray(response.get(0));
 
-                for(int i = 0; i<response_json_array.length(); i++){
+                for(int i = 0; i<response_json_array.length(); i++) {
                     String lat = response_json_array.getJSONObject(i).optString("lat");
                     JSONObject lat_json = new JSONObject(lat);
                     latList.add((String) lat_json.get("$numberDouble"));
@@ -253,7 +262,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build());
         app.login(Credentials.anonymous());
         User user = app.currentUser();
-        String partitionKey = "1";
+        String partitionKey = "security";
         SyncConfiguration config = new SyncConfiguration.Builder(
                 user,
                 partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
@@ -261,7 +270,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         backgroundThreadRealm = Realm.getInstance(config);
         backgroundThreadRealm.executeTransaction(transactionRealm -> {
-            TrackingGeoSpacial results = backgroundThreadRealm.where(TrackingGeoSpacial.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
+            TrackingGeoSpatial results = backgroundThreadRealm.where(TrackingGeoSpatial.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
             tracking_data.add(results);
         });
 

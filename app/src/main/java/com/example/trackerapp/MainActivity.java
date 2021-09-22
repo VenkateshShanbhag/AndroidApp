@@ -1,39 +1,20 @@
 package com.example.trackerapp;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.LinkProperties;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.RemoteMessage;
-
-import org.json.JSONArray;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.reactivex.annotations.NonNull;
 import io.realm.Realm;
 
 public class MainActivity extends AppCompatActivity  {
@@ -42,9 +23,6 @@ public class MainActivity extends AppCompatActivity  {
     Button trackAllVehicles;
     public Realm realm;
     private int networkFlag=0;
-    List<String> latList = new ArrayList<String>();
-    List<String> lonList = new ArrayList<String>();
-    List<LatLng> latlonList = new ArrayList<LatLng>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,35 +75,6 @@ public class MainActivity extends AppCompatActivity  {
                 }
             });
     }
-
-
-
-//    public void syncLatestData(){
-//        try {
-//            URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/tracking-data-api/incoming_webhook/webhook0");
-//            String readLine = null;
-//            HttpURLConnection conection = (HttpURLConnection) url.openConnection();
-//            conection.setRequestMethod("GET");
-//            int responseCode = conection.getResponseCode();
-//            if (responseCode == HttpURLConnection.HTTP_OK) {
-//                BufferedReader in = new BufferedReader(
-//                        new InputStreamReader(conection.getInputStream()));
-//                ArrayList<String> response = new ArrayList<>();
-//
-//                while ((readLine = in.readLine()) != null) {
-//                    response.add(readLine);
-//                }
-//                in.close();
-//                // TODO: Parse the result and display in maps
-//                JSONArray response_json_array = new JSONArray(response.get(0));
-//                System.out.println("JSON String Result " + response_json_array);
-//            }
-//
-//            System.out.println("|||||||||-LATLON TIMELINE-|||||||||");
-//        } catch (Exception e){
-//            System.out.println("EXCEPTION: "+e);
-//        }
-//    }
 
     private void openVehicleDetailsPage() {
         Intent intent = new Intent(this, AllVehicleDetails.class);

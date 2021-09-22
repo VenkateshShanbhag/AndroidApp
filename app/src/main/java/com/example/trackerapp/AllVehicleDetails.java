@@ -3,10 +3,7 @@ package com.example.trackerapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,8 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.example.trackerapp.Model.Tracking;
-import com.example.trackerapp.Model.TrackingGeoSpacial;
+import com.example.trackerapp.Model.TrackingGeoSpatial;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +26,6 @@ import io.realm.mongodb.sync.ClientResetRequiredError;
 import io.realm.mongodb.sync.SyncConfiguration;
 import io.realm.mongodb.sync.SyncSession;
 
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class AllVehicleDetails extends AppCompatActivity implements AdapterView.OnItemClickListener {
     String Appid;
@@ -88,7 +82,7 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
 //        });
         User user = app.currentUser();
 
-        String partitionValue = "1";
+        String partitionValue = "security";
 
         SyncConfiguration config = new SyncConfiguration.Builder(user, partitionValue)
                 .allowWritesOnUiThread(true)
@@ -98,7 +92,7 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(@NonNull Realm realm) {
-                RealmResults<TrackingGeoSpacial> results = realm.where(TrackingGeoSpacial.class).findAll();
+                RealmResults<TrackingGeoSpatial> results = realm.where(TrackingGeoSpatial.class).findAll();
                 for (int i = 0; i < results.size(); i++) {
                     vehicles.add(results.get(i).toString());
                 }

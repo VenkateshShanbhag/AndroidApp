@@ -2,9 +2,7 @@ package com.example.trackerapp;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
 
 import android.content.Context;
 import android.content.Intent;
@@ -18,8 +16,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import com.example.trackerapp.Model.TrackingGeoSpacial_location;
-import com.example.trackerapp.Model.TrackingGeoSpacial;
+import com.example.trackerapp.Model.TrackingGeoSpatial;
+import com.example.trackerapp.Model.TrackingGeoSpatial_location;
 import com.example.trackerapp.databinding.ActivityShowAllVehiclesBinding;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -62,7 +60,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     private GoogleMap mMap;
     private ActivityShowAllVehiclesBinding binding;
     String Appid;
-    public List<RealmResults<TrackingGeoSpacial>> tracking_data = new ArrayList<RealmResults<TrackingGeoSpacial>>();
+    public List<RealmResults<TrackingGeoSpatial>> tracking_data = new ArrayList<RealmResults<TrackingGeoSpatial>>();
     double lat;
     double lon;
     String reg_num;
@@ -75,15 +73,17 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     List<String> regNumList = new ArrayList<String>();
     String partitionKey;
     List<String> timestampList = new ArrayList<String>();
-    TrackingGeoSpacial tracking=null;
+    TrackingGeoSpatial tracking=null;
     boolean inCircle;
     MyApplication dbConfigs;
+    String latest_location;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         dbConfigs = new MyApplication();
         Appid = dbConfigs.getAppid();
+        latest_location = dbConfigs.getLatest_location();
 
         super.onCreate(savedInstanceState);
 
@@ -145,7 +145,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
 
     /* Realm Sync init */
     public void syncConfigurations(User user) {
-        partitionKey = "1";
+        partitionKey = "security";
         SyncConfiguration config = new SyncConfiguration.Builder(
                 user,
                 partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
@@ -157,9 +157,8 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
 
     private void syncLatestLatLon(User user){
         try {
-            System.out.println("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/get-all-latlon/incoming_webhook/webhook1");
-            URL url = new URL("https://us-east-1.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-ykkzh/service/get-all-latlon/incoming_webhook/webhook1");
-            String readLine = null;
+            URL url = new URL(latest_location);
+            String readLine;
             HttpURLConnection conection = (HttpURLConnection) url.openConnection();
             conection.setRequestMethod("GET");
             int responseCode = conection.getResponseCode();
@@ -202,15 +201,15 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
                         Date date = new Date(timestamp);
                         String reg_num = regNumList.get(i);
                         System.out.println("REG_NUM !!!!!!"+ reg_num);
-                        tracking = transactionRealm.where(TrackingGeoSpacial.class).equalTo("reg_num",reg_num).findFirst();
+                        tracking = transactionRealm.where(TrackingGeoSpatial.class).equalTo("reg_num",reg_num).findFirst();
                         if(tracking == null) {
-                            tracking = new TrackingGeoSpacial();  // or realm.createObject(Person.class, id);
+                            tracking = new TrackingGeoSpatial();  // or realm.createObject(Person.class, id);
                             tracking.set_id(new ObjectId());
                         }
                         tracking.setTimestamp(date);
-                        tracking.setPartition_key("1");
+                        tracking.setPartition_key("security");
                         tracking.setReg_num(reg_num);
-                        TrackingGeoSpacial_location tracking_location = new TrackingGeoSpacial_location();
+                        TrackingGeoSpatial_location tracking_location = new TrackingGeoSpatial_location();
                         RealmList<Double> latlonlist = new RealmList<>();
                         latlonlist.add(lat1);
                         latlonlist.add(lon1);
@@ -241,8 +240,8 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
                 RealmChangeListener<Realm> realmListener = new RealmChangeListener<Realm>() {
                     @Override
                     public void onChange(Realm realm) {
-                        RealmResults<TrackingGeoSpacial> results =
-                                realm.where(TrackingGeoSpacial.class).sort("Timestamp", Sort.DESCENDING).distinct("reg_num").findAll();
+                        RealmResults<TrackingGeoSpatial> results =
+                                realm.where(TrackingGeoSpatial.class).sort("Timestamp", Sort.DESCENDING).distinct("reg_num").findAll();
 
                         tracking_data.add(results);
                     }

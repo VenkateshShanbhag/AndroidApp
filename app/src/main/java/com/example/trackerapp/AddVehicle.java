@@ -1,29 +1,21 @@
 package com.example.trackerapp;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-
-import com.example.trackerapp.Model.TrackingGeoSpacial_location;
-import com.example.trackerapp.Model.TrackingGeoSpacial;
+import com.example.trackerapp.Model.TrackingGeoSpatial_location;
+import com.example.trackerapp.Model.TrackingGeoSpatial;
 
 import org.bson.types.ObjectId;
-
 import java.util.Date;
-
 import io.realm.Realm;
 import io.realm.RealmList;
 import io.realm.mongodb.App;
-import io.realm.mongodb.AppConfiguration;
-import io.realm.mongodb.Credentials;
 import io.realm.mongodb.User;
 import io.realm.mongodb.sync.SyncConfiguration;
 
@@ -38,36 +30,19 @@ public class AddVehicle extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        MyApplication dbConfigs = new MyApplication();
-        Appid = dbConfigs.getAppid();
+        dbConfigs = new MyApplication();
+        app = dbConfigs.getApp();
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_add_vehicle);
-
         name = findViewById(R.id.name);
         reg_num = findViewById(R.id.reg_no);
         city = findViewById(R.id.city);
         btnSave = findViewById(R.id.btn_save);
 
-        // Initialized in MyApplication.java file
-        //Realm.init(this);
-        app = new App(new AppConfiguration.Builder(Appid).build());
-
-        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
-            @Override
-            public void onResult(App.Result<User> result) {
-                if (result.isSuccess()) {
-                    Log.v("User", "Logged In Successfully");
-                } else {
-                    Log.v("User", "Failed to Login");
-                }
-            }
-        });
-
         User user = app.currentUser();
 
-        //Users user_data = new Users();
-        TrackingGeoSpacial tracking_data = new TrackingGeoSpacial();
+        TrackingGeoSpatial tracking_data = new TrackingGeoSpatial();
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -76,7 +51,7 @@ public class AddVehicle extends AppCompatActivity {
                 String city_of_reg = city.getText().toString();
 
                 /* Geospatial object */
-                TrackingGeoSpacial_location location = new TrackingGeoSpacial_location();
+                TrackingGeoSpatial_location location = new TrackingGeoSpatial_location();
                 RealmList<Double> latlonlist = new RealmList<>();
                 latlonlist.add(dbConfigs.getStatic_lat());
                 latlonlist.add(dbConfigs.getStatic_lon());
@@ -86,7 +61,7 @@ public class AddVehicle extends AppCompatActivity {
                 /* Tracking object */
                 tracking_data.setTimestamp(new Date());
                 tracking_data.setReg_num(registration_num.toUpperCase());
-                tracking_data.setPartition_key("1");
+                tracking_data.setPartition_key("security");
                 tracking_data.setLocation(location);
                 tracking_data.set_id(new ObjectId());
                 tracking_data.setCity(city_of_reg);
@@ -95,7 +70,7 @@ public class AddVehicle extends AppCompatActivity {
                 Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);
 
-                String partitionValue = "1";
+                String partitionValue = "security";
                 SyncConfiguration config = new SyncConfiguration.Builder(user, partitionValue)
                         .allowWritesOnUiThread(true)
                         .allowQueriesOnUiThread(true)
