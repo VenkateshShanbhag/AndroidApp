@@ -3,140 +3,143 @@
 # Confluent IIOT tracking App
 The Android application targets to utilize and demonstrate the power and features of MongoDB atlas available in latest release 5.0 .
 The android application has features such as time series collection, RealmDB, sync, triggers and push notifications.
-We have utilised time series collection hosted on mongodb managed atlas cluster as a sink for confluent connector to store the stream data for stimulation of moving vehicles. The stream can be generated using below python script refer [documentation](https://github.com/confluentinc/confluent-kafka-python).
+We have utilised time series collection hosted on mongodb managed atlas cluster as a sink for confluent connector to store the stream data for stimulation of moving vehicles. The stream can be generated using python script in data_generator folder.
 
-## Initail setup
-Prerequisites for building the application.
+## Setup
+Prerequisites for building the run and build the apk.
 
     1. Android Studio.
     2. Mongodb Atlas cluster with mongodb version 5.0 or higher.
     3. Firebase Account. (for Alerts and Push notifications).
     4. GCP cloud credentials for maps service and firebase service.
 
-#### ANDROID STUDIO:
-1. install android studio:
-   Download and Install android studio from : https://developer.android.com/studio
-   Clone this repository. Open the project AndroidApp in android studio and Sync all the gradle dependencies.
 
-2. Configure ATLAS:
+1. Install android studio:
+   Download and Install android studio from [here](https://developer.android.com/studio). Clone the repository and open the IoT/AndroidApp in android studio. Sync all the gradle dependencies.
+
+2. Configure MongoDB Atlas:
    Create collections in vehicle database:
-   1. TrackingGeospacial: Holds the data of current location of tracked users also the details of users such as city, name etc.
-   2. tracking-historic (Time series collection) - Live / Stimulated data is loaded to this collection. The data is generated from python script << git location >> and loaded using confluent connector for MongoDB Atlas.
+  1. TrackingGeospatial: Holds the data of current location of tracked users also the details of users such as city, name etc.
+  2. tracking-historic (Time series collection) - Live / Stimulated data is loaded to this collection. The data is generated from python script << git location >> and loaded using confluent connector for MongoDB Atlas.
 
 3. #### Configure Realm:
    We need following preconfigured in realm application to run the android application.
-   * ##### Realm schema for TrackingGeospatial.
-     TrackingGeospatial schema:
+  * ##### Realm schema for TrackingGeospatial.
+    TrackingGeospatial schema:
 
-         {
-            "title": "TrackingGeoSpacial",
-            "bsonType": "object",
-            "properties": {
-               "_id": {
-                  "bsonType": "objectId"
-               },
-               "Timestamp": {
-                  "bsonType": "date"
-               },
-               "location": {
-                  "bsonType": "object",
-                  "properties": {
-                     "coordinates": {
-                        "bsonType": "array",
-                        "items": {
-                           "bsonType": "double"
-                        }
-                     },
-                     "type": {
-                        "bsonType": "string"
-                     }
-                  }
-               },
-               "partition_key": {
-                  "bsonType": "string"
-               },
-               "reg_num": {
-                  "bsonType": "string"
-               },
-               "city": {
-                  "bsonType": "string"
-               },
-               "owner": {
-                  "bsonType": "string"
-               }
-            }
-         }  
+        {
+           "title": "TrackingGeoSpatial",
+           "bsonType": "object",
+           "properties": {
+              "_id": {
+                 "bsonType": "objectId"
+              },
+              "Timestamp": {
+                 "bsonType": "date"
+              },
+              "location": {
+                 "bsonType": "object",
+                 "properties": {
+                    "coordinates": {
+                       "bsonType": "array",
+                       "items": {
+                          "bsonType": "double"
+                       }
+                    },
+                    "type": {
+                       "bsonType": "string"
+                    }
+                 }
+              },
+              "partition_key": {
+                 "bsonType": "string"
+              },
+              "reg_num": {
+                 "bsonType": "string"
+              },
+              "city": {
+                 "bsonType": "string"
+              },
+              "owner": {
+                 "bsonType": "string"
+              }
+           }
+        }  
 
-     Create a realm application with following schema. Note: The "partition_key" can be set as per requirement depending upon use case please refer [here](https://docs.mongodb.com/realm/sync/partitions/).
+    Create a realm application with following schema. Note: The "partition_key" can be set as per requirement depending upon use case please refer [here](https://docs.mongodb.com/realm/sync/partitions/). Verify the data model is generated for the schema by navigating to SDK on side pane of Realm UI.
 
-   * ##### Webhooks :
-     Create webhooks to access the time series collection data and the tracking collection for displaying all vehicles.
+  * ##### Webhooks :
+    Create webhooks to access the time series collection data and the tracking collection for displaying all vehicles.
 
-     Function 1: GetTimeline : get all coordinates to for particular vehicle.
+    Function 1: GetTimeline : Returns all coordinates for requested vehicle.
 
-         // This function is the webhook's request handler.
+        // This function is the webhook's request handler.
+         exports = function(payload, response) {
+             const body = payload.body;
+             console.log(payload.body);
+             const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").find(payload.query);
+             return  doc;
+         };
+
+    Function 2 : GetLatestLocation : Returns latest location of all vehicles.
+
+        // This function is the webhook's request handler.
           exports = function(payload, response) {
-              const body = payload.body;
-              console.log(payload.body);
-              const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").find(payload.query);
-              return  doc;
+              const query = [
+                {"$sort":{"Timestamp": -1}},
+                {"$group":{
+                  "_id":"$reg_num",
+                  "reg_num":{"$first":"$reg_num"},
+                  "Timestamp":{"$first":"$Timestamp"},
+                  "lat":{"$first":"$lat"},
+                  "lon":{"$first":"$lon"}
+                  }
+                },
+                {"$project":{"_id":0}}];
+              const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").aggregate(query);
+          return  doc;
           };
-
-     Function 2 : GetLatestLocation : Get all vehicles latest location.
-
-         // This function is the webhook's request handler.
-           exports = function(payload, response) {
-               const query = [
-                 {"$sort":{"Timestamp": -1}},
-                 {"$group":{
-                   "_id":"$reg_num",
-                   "reg_num":{"$first":"$reg_num"},
-                   "Timestamp":{"$first":"$Timestamp"},
-                   "lat":{"$first":"$lat"},
-                   "lon":{"$first":"$lon"}
-                   }
-                 },
-                 {"$project":{"_id":0}}];
-               const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").aggregate(query);
-           return  doc;
-           };
 
 
         Copy the webhook URLs to MyApplication class to their respective delarations.
 
-* ##### Triggers for database collection update:
-  Create a trigger with below function to listen to the database change event.
+
+   * ##### Triggers for database collection update:
+        Create a trigger function to listen to the database change event. Function is configured to send push notifications to the application on change event on TrackingGeospatial collection.
+
+             exports = function(changeEvent) {
+               const { updateDescription, fullDocument } = changeEvent;
+             
+               const doc = context.services.get("mongodb-atlas").db("vehicle").collection("TrackingGeospatial").aggregate([
+               {"$geoNear": {"near": { "type": 'Point', "coordinates": [12.97182, 77.59499] },"distanceField": 'dist',"maxDistance": 5000}}
+               ]);
+               context.services.get("gcm").send({
+                 "to": "/topics/GeofenceTrigger",
+                 "notification":{
+                 "title":"Alert!!",
+                 "body":String(doc)
+               }
+               });
+               // const collection = context.services.get("mongodb-atlas").db("vehicle").collection("GeofenceViolation");
+               // delete fullDocument['_id'];
+               // collection.insertOne(fullDocument);
+               return doc;
+             
+             };
 
 
-        exports = function(changeEvent) {
-          const { updateDescription, fullDocument } = changeEvent;
-        
-          const doc = context.services.get("mongodb-atlas").db("vehicle").collection("TrackingGeospacial").aggregate([
-          {"$geoNear": {"near": { "type": 'Point', "coordinates": [12.97182, 77.59499] },"distanceField": 'dist',"maxDistance": 5000}}
-          ]);
-          context.services.get("gcm").send({
-          "to": "/topics/GeofenceTrigger",
-          "notification":{
-          "title":"Alert!!",
-          "body":String(doc)
-          }
-          });
-          // const collection = context.services.get("mongodb-atlas").db("vehicle").collection("GeofenceViolation");
-          // delete fullDocument['_id'];
-          // collection.insertOne(fullDocument);
-          return doc;
-        
-        };
+
+* ##### Realm App id :
+  Copy the app id to appid variable in MyApplication class.
+
+* ##### GCP map token:
+  Create google API_KEY for accessing maps service and paste it in AndroidManifest.xml file.
+
+* ##### Firebase Account for push notifications:
+  Create a Firebase account add the api and api_key to the push notification settings.
 
 
-    * ###### app id : 
-        Copy the app id to appid variable in MyApplication class.
-
-    * ###### GCP map token: 
-        Create google API_KEY for accessing maps service and paste it in AndroidManifest.xml file.
-
-    * ###### Firebase Account for push notifications: 
-        Create a Firebase account add the api and api_key to the push notification settings.
+Start the sync by navigating to sync on side pane from realm UI. Follow the [documentation](https://docs.mongodb.com/realm/sync/get-started/) for more details
 
 ## Confluent Configuration
 Follow the instruction in [here](https://github.com/AskMeiPaaS/iiot-hybrid-with-mongodb-confluent) to create a topic and MongoDBAtlasSink connector.
@@ -200,7 +203,7 @@ The following use case uses MongoDB Atlas resources and Confluent Cloud that may
 
 1. [Kafka producer script](https://github.com/confluentinc/confluent-kafka-python)
 2. [Confluent cloud setup](https://github.com/AskMeiPaaS/iiot-hybrid-with-mongodb-confluent)
-3. [Realm http API setup](https://docs.mongodb.com/realm/services/http/)   
+3. [Realm http API setup](https://docs.mongodb.com/realm/services/http/)
 4. [Push notification setup](https://docs.mongodb.com/realm/services/push-notifications/)
 5. [MongoDB Trigger](https://docs.mongodb.com/realm/triggers/database-triggers/)
 6. [Time series collection](https://docs.mongodb.com/manual/core/timeseries-collections/)
