@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -48,15 +49,7 @@ import java.util.List;
 import io.realm.Realm;
 import io.realm.Sort;
 import io.realm.mongodb.App;
-import io.realm.mongodb.AppConfiguration;
-import io.realm.mongodb.Credentials;
-import io.realm.mongodb.User;
-import io.realm.mongodb.sync.ClientResetRequiredError;
-import io.realm.mongodb.sync.SyncConfiguration;
-import io.realm.mongodb.sync.SyncSession;
 
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnPolylineClickListener{
     private GoogleMap mMap;
@@ -66,14 +59,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public String[] registration_number;
     String value;
     Button refresh;
-    Button show_timeline;
+    Button home;
     List<String> latList = new ArrayList<String>();
     List<String> lonList = new ArrayList<String>();
     List<LatLng> latlonList = new ArrayList<LatLng>();
     int vehicleTimeline = 0;
     MyApplication dbConfigs = new MyApplication();
     Realm backgroundThreadRealm;
-    Date timerange;
     App app;
     public List<TrackingGeoSpatial> tracking_data = new ArrayList<TrackingGeoSpatial>();
     SupportMapFragment mapFragment;
@@ -83,6 +75,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         timeline_url = dbConfigs.getTimeline_url();
         Appid = dbConfigs.getAppid();
+        backgroundThreadRealm = dbConfigs.getAppConfigs();
 
         super.onCreate(savedInstanceState);
         // Get the value passed from intent in previous activity.
@@ -92,20 +85,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.v("Intent Value", value);
         }
         registration_number = value.split(" - ", 2);
-        SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
-            @Override
-            public void onClientReset(SyncSession session, ClientResetRequiredError error) {
-                Log.e("EXAMPLE", "Client Reset required for: " +
-                        session.getConfiguration().getServerUrl() + " for error: " +
-                        error.toString());
-            }
-        };
 
-        /* Initialize app configuration and login */
-        app = new App(new AppConfiguration.Builder(Appid)
-                .defaultClientResetHandler(handler)
-                .build());
-        app.login(Credentials.anonymous());
         
         // MAP Activity
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
@@ -123,51 +103,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        show_timeline = findViewById(R.id.timeline);
-        try {
-            show_timeline.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    try {
-                        showVehicleTimeline();
-                    } catch (IOException | JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        } catch (Exception e) {
-            Log.e("NETWORK: ", "PLEASE CHEK YOUR NETWORK CONNECTION");
-        }
+        home = findViewById(R.id.home);
+        home.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                backgroundThreadRealm.close();
+                openHomePage();
+            }
+        });
     }
-
-
-    public void showVehicleTimeline() throws IOException, JSONException {
-        vehicleTimeline = 1;
-        startDialogActivity();
-    }
-
-
 
 
     private void refreshPage() {
-        final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        mapFragment.getMapAsync(this);
-        ft.detach(mapFragment);
-        ft.attach(mapFragment);
-
-
-
-
-//        Intent intent = getIntent();
-//        intent.putExtra("key", value);
-//        startActivity(intent);
+//        final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+//        ft.detach(mapFragment);
+//        ft.attach(mapFragment);
+        backgroundThreadRealm.close();
+        Intent intent = getIntent();
+        intent.putExtra("key", value);
+        startActivity(intent);
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
         try {
-
             // Timeline data
             URL url = new URL(timeline_url+registration_number[1].toUpperCase());
             String readLine = null;
@@ -247,28 +207,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void startDialogActivity() {
-        SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
-            @Override
-            public void onClientReset(SyncSession session, ClientResetRequiredError error) {
-                Log.e("EXAMPLE", "Client Reset required for: " +
-                        session.getConfiguration().getServerUrl() + " for error: " +
-                        error.toString());
-            }
-        };
 
-        /* Initialize app configuration and login */
-        App app = new App(new AppConfiguration.Builder(Appid)
-                .defaultClientResetHandler(handler)
-                .build());
-        app.login(Credentials.anonymous());
-        User user = app.currentUser();
-        String partitionKey = "security";
-        SyncConfiguration config = new SyncConfiguration.Builder(
-                user,
-                partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
-                .build();
-
-        backgroundThreadRealm = Realm.getInstance(config);
         backgroundThreadRealm.executeTransaction(transactionRealm -> {
             TrackingGeoSpatial results = backgroundThreadRealm.where(TrackingGeoSpatial.class).sort("Timestamp", Sort.DESCENDING).equalTo("reg_num", registration_number[1].toUpperCase()).findFirst();
             tracking_data.add(results);
@@ -299,5 +238,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //finally creating the alert dialog and displaying it
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
+    }
+
+    private void openHomePage() {
+        Intent intent = new Intent(this, MainActivity.class);
+        Log.v("INFO>>","The Add vehicle activity started");
+        startActivity(intent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        backgroundThreadRealm.close();
+        Intent intent = new Intent(this, MainActivity.class);
+        Log.v("INFO>>","The Add vehicle activity started");
+        startActivity(intent);
     }
 }

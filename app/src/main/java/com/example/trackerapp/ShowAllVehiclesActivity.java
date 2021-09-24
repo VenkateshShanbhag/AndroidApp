@@ -47,13 +47,6 @@ import io.realm.RealmChangeListener;
 import io.realm.RealmList;
 import io.realm.RealmResults;
 import io.realm.Sort;
-import io.realm.mongodb.App;
-import io.realm.mongodb.AppConfiguration;
-import io.realm.mongodb.Credentials;
-import io.realm.mongodb.User;
-import io.realm.mongodb.sync.ClientResetRequiredError;
-import io.realm.mongodb.sync.SyncConfiguration;
-import io.realm.mongodb.sync.SyncSession;
 
 public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -66,7 +59,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     String reg_num;
     Realm backgroundThreadRealm;
     Button refresh;
-    Button add_vehicle;
+    Button home;
     Button vehicle_list;
     List<String> latList = new ArrayList<String>();
     List<String> lonList = new ArrayList<String>();
@@ -82,30 +75,14 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         dbConfigs = new MyApplication();
+        backgroundThreadRealm = dbConfigs.getAppConfigs();
         Appid = dbConfigs.getAppid();
         latest_location = dbConfigs.getLatest_location();
 
         super.onCreate(savedInstanceState);
 
-        SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
-            @Override
-            public void onClientReset(SyncSession session, ClientResetRequiredError error) {
-                Log.e("EXAMPLE", "Client Reset required for: " +
-                        session.getConfiguration().getServerUrl() + " for error: " +
-                        error.toString());
-            }
-        };
-
-        /* Initialize app configuration and login */
-        App app = new App(new AppConfiguration.Builder(Appid)
-                .defaultClientResetHandler(handler)
-                .build());
-        app.login(Credentials.anonymous());
-        User user = app.currentUser();
-
-        syncConfigurations(user);
-        syncLatestLatLon(user);
-        readRealmData(user);
+        syncLatestLatLon();
+        readRealmData();
 
         binding = ActivityShowAllVehiclesBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -124,12 +101,12 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
             }
         });
 
-        add_vehicle = findViewById(R.id.add_vehicle);
-        add_vehicle.setOnClickListener(new View.OnClickListener() {
+        home = findViewById(R.id.home);
+        home.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 backgroundThreadRealm.close();
-                openAddVehiclePage();
+                openHomePage();
             }
         });
 
@@ -137,25 +114,14 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         vehicle_list.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                backgroundThreadRealm.close();
+                //backgroundThreadRealm.close();
                 showVehicleList();
             }
         });
     }
 
-    /* Realm Sync init */
-    public void syncConfigurations(User user) {
-        partitionKey = "security";
-        SyncConfiguration config = new SyncConfiguration.Builder(
-                user,
-                partitionKey).allowWritesOnUiThread(true).allowQueriesOnUiThread(true)
-                .build();
 
-        backgroundThreadRealm = Realm.getInstance(config);
-
-    }
-
-    private void syncLatestLatLon(User user){
+    private void syncLatestLatLon(){
         try {
             URL url = new URL(latest_location);
             String readLine;
@@ -205,23 +171,20 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
                         if(tracking == null) {
                             tracking = new TrackingGeoSpatial();  // or realm.createObject(Person.class, id);
                             tracking.set_id(new ObjectId());
+                            tracking.setTimestamp(date);
+                            tracking.setPartition_key("security");
+                            tracking.setReg_num(reg_num);
+                            TrackingGeoSpatial_location tracking_location = new TrackingGeoSpatial_location();
+                            RealmList<Double> latlonlist = new RealmList<>();
+                            latlonlist.add(lat1);
+                            latlonlist.add(lon1);
+                            tracking_location.setCoordinates(latlonlist);
+                            tracking_location.setType("Point");
+
+                            tracking.setLocation(tracking_location);
                         }
-                        tracking.setTimestamp(date);
-                        tracking.setPartition_key("security");
-                        tracking.setReg_num(reg_num);
-                        TrackingGeoSpatial_location tracking_location = new TrackingGeoSpatial_location();
-                        RealmList<Double> latlonlist = new RealmList<>();
-                        latlonlist.add(lat1);
-                        latlonlist.add(lon1);
-                        tracking_location.setCoordinates(latlonlist);
-                        tracking_location.setType("Point");
-
-                        tracking.setLocation(tracking_location);
-
-
                         transactionRealm.insertOrUpdate(tracking);
                     }
-
                     System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
                 });
             }
@@ -232,7 +195,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
 
     /* Sync data from Atlas to Realm db */
     //TODO: The query should read all the files. as the timeseries data is synced directly into Tracking data in updateLatestLatLon method
-    public void readRealmData(User user){
+    public void readRealmData(){
         backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(@NonNull Realm realm) {
@@ -318,8 +281,8 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         startActivity(intent);
     }
 
-    private void openAddVehiclePage() {
-        Intent intent = new Intent(this, AddVehicle.class);
+    private void openHomePage() {
+        Intent intent = new Intent(this, MainActivity.class);
         Log.v("INFO>>","The Add vehicle activity started");
         startActivity(intent);
     }
@@ -327,6 +290,14 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     private void refreshPage() {
         Intent intent = getIntent();
         finish();
+        startActivity(intent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        backgroundThreadRealm.close();
+        Intent intent = new Intent(this, MainActivity.class);
+        Log.v("INFO>>","The Add vehicle activity started");
         startActivity(intent);
     }
 

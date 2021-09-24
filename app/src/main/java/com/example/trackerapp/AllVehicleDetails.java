@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 
 import com.example.trackerapp.Model.TrackingGeoSpatial;
@@ -19,12 +20,6 @@ import java.util.List;
 import io.realm.Realm;
 import io.realm.RealmResults;
 import io.realm.mongodb.App;
-import io.realm.mongodb.AppConfiguration;
-import io.realm.mongodb.Credentials;
-import io.realm.mongodb.User;
-import io.realm.mongodb.sync.ClientResetRequiredError;
-import io.realm.mongodb.sync.SyncConfiguration;
-import io.realm.mongodb.sync.SyncSession;
 
 
 public class AllVehicleDetails extends AppCompatActivity implements AdapterView.OnItemClickListener {
@@ -32,12 +27,15 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
     private App app;
     public Realm realm;
     public List<String> vehicles=new ArrayList<String>();
+    Button home;
+    Realm backgroundThreadRealm;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         MyApplication dbConfigs = new MyApplication();
         Appid = dbConfigs.getAppid();
+        backgroundThreadRealm = dbConfigs.getAppConfigs();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_vehicle_details);
 
@@ -47,48 +45,17 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         {
             System.out.println("EXCEPTION >>>>>>>>>>>>>>>>> "+ e);
         }
+
+        home = findViewById(R.id.home);
+        home.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openHomePage();
+            }
+        });
     }
 
     public void getDataFromSync() {
-        SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
-            @Override
-            public void onClientReset(SyncSession session, ClientResetRequiredError error) {
-                Log.e("EXAMPLE", "Client Reset required for: " +
-                        session.getConfiguration().getServerUrl() + " for error: " +
-                        error.toString());
-            }
-        };
-
-
-        App app = new App(new AppConfiguration.Builder(Appid)
-                .defaultClientResetHandler(handler)
-                .build());
-
-
-        app.login(Credentials.anonymous());
-//        app.loginAsync(Credentials.anonymous(), new App.Callback<User>() {
-//            @Override
-//            public void onResult(App.Result<User> result) {
-//                if(result.isSuccess())
-//                {
-//                    Log.v("User","Logged In Successfully");
-//
-//                }
-//                else
-//                {
-//                    Log.v("User","Failed to Login");
-//                }
-//            }
-//        });
-        User user = app.currentUser();
-
-        String partitionValue = "security";
-
-        SyncConfiguration config = new SyncConfiguration.Builder(user, partitionValue)
-                .allowWritesOnUiThread(true)
-                .allowQueriesOnUiThread(true)
-                .build();
-        Realm backgroundThreadRealm = Realm.getInstance(config);
         backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(@NonNull Realm realm) {
@@ -120,5 +87,19 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         Intent i = new Intent(this, MapsActivity.class);
         i.putExtra("key",vehicle_data);
         startActivity(i);
+    }
+
+    private void openHomePage() {
+        Intent intent = new Intent(this, MainActivity.class);
+        Log.v("INFO>>","The Add vehicle activity started");
+        startActivity(intent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        backgroundThreadRealm.close();
+        Intent intent = new Intent(this, MainActivity.class);
+        Log.v("INFO>>","The Add vehicle activity started");
+        startActivity(intent);
     }
 }

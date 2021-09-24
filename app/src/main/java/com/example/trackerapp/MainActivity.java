@@ -24,9 +24,11 @@ public class MainActivity extends AppCompatActivity  {
     public Realm realm;
     private int networkFlag=0;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
         System.out.println("!!!!!!! NETWORK STATUS - !!!!!!!! - "+networkFlag);
         setContentView(R.layout.activity_main);

@@ -3,6 +3,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +17,7 @@ import java.util.Date;
 import io.realm.Realm;
 import io.realm.RealmList;
 import io.realm.mongodb.App;
-import io.realm.mongodb.User;
-import io.realm.mongodb.sync.SyncConfiguration;
+
 
 public class AddVehicle extends AppCompatActivity {
     String Appid;
@@ -26,12 +26,15 @@ public class AddVehicle extends AppCompatActivity {
     EditText reg_num;
     EditText city;
     Button btnSave;
+    Button home;
     MyApplication dbConfigs;
+    Realm backgroundThreadRealm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         dbConfigs = new MyApplication();
         app = dbConfigs.getApp();
+        backgroundThreadRealm = dbConfigs.getAppConfigs();
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_add_vehicle);
@@ -39,8 +42,6 @@ public class AddVehicle extends AppCompatActivity {
         reg_num = findViewById(R.id.reg_no);
         city = findViewById(R.id.city);
         btnSave = findViewById(R.id.btn_save);
-
-        User user = app.currentUser();
 
         TrackingGeoSpatial tracking_data = new TrackingGeoSpatial();
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -70,17 +71,19 @@ public class AddVehicle extends AppCompatActivity {
                 Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);
 
-                String partitionValue = "security";
-                SyncConfiguration config = new SyncConfiguration.Builder(user, partitionValue)
-                        .allowWritesOnUiThread(true)
-                        .allowQueriesOnUiThread(true)
-                        .build();
-                Realm backgroundThreadRealm = Realm.getInstance(config);
                 backgroundThreadRealm.executeTransaction(transactionRealm -> {
                     transactionRealm.insert(tracking_data);
                     System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
                 });
                 backgroundThreadRealm.close();
+            }
+        });
+
+        home = findViewById(R.id.home);
+        home.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openHomePage();
             }
         });
     }
@@ -103,5 +106,20 @@ public class AddVehicle extends AppCompatActivity {
         alertDialog.show();
         alertDialog.closeOptionsMenu();
 
+    }
+
+    private void openHomePage() {
+        backgroundThreadRealm.close();
+        Intent intent = new Intent(this, MainActivity.class);
+        Log.v("INFO>>","The Add vehicle activity started");
+        startActivity(intent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        backgroundThreadRealm.close();
+        Intent intent = new Intent(this, MainActivity.class);
+        Log.v("INFO>>","The Add vehicle activity started");
+        startActivity(intent);
     }
 }

@@ -3,11 +3,16 @@ package com.example.trackerapp;
 import android.app.Application;
 import android.util.Log;
 
+import java.security.PublicKey;
+
 import io.realm.Realm;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
 import io.realm.mongodb.Credentials;
 import io.realm.mongodb.User;
+import io.realm.mongodb.sync.ClientResetRequiredError;
+import io.realm.mongodb.sync.SyncConfiguration;
+import io.realm.mongodb.sync.SyncSession;
 
 public class MyApplication extends Application  {
     String appid = "application-0-gmonu";
@@ -16,6 +21,32 @@ public class MyApplication extends Application  {
     App app;
     String timeline_url = "https://us-west-2.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-gmonu/service/GetTimeline/incoming_webhook/webhook0"+"?reg_num=";
     String latest_location = "https://us-west-2.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-gmonu/service/GetLatestLocation/incoming_webhook/webhook0";
+    //Realm backgroundThreadRealm = getAppConfigs();
+
+
+    public Realm getAppConfigs() {
+        Realm.init(this);
+        SyncSession.ClientResetHandler handler = new SyncSession.ClientResetHandler() {
+            @Override
+            public void onClientReset(SyncSession session, ClientResetRequiredError error) {
+                Log.e("EXAMPLE", "Client Reset required for: " +
+                        session.getConfiguration().getServerUrl() + " for error: " +
+                        error.toString());
+            }
+        };
+        App app = new App(new AppConfiguration.Builder(appid)
+                .defaultClientResetHandler(handler)
+                .build());
+        User user = app.currentUser();
+        app.login(Credentials.anonymous());
+        String partitionValue = "security";
+        SyncConfiguration config = new SyncConfiguration.Builder(user, partitionValue)
+                .allowWritesOnUiThread(true)
+                .allowQueriesOnUiThread(true)
+                .build();
+        Realm backgroundThreadRealm = Realm.getInstance(config);
+        return backgroundThreadRealm;
+    }
 
     public String getAppid() {
         return appid;
@@ -55,6 +86,7 @@ public class MyApplication extends Application  {
     public void onCreate() {
         super.onCreate();
         Realm.init(this);
+
     }
 
 }
