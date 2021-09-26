@@ -20,7 +20,6 @@ import io.realm.mongodb.App;
 
 
 public class AddVehicle extends AppCompatActivity {
-    String Appid;
     private App app;
     EditText name;
     EditText reg_num;

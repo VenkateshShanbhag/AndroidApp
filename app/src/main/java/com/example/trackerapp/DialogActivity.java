@@ -12,7 +12,6 @@ import io.realm.Realm;
 public class DialogActivity extends AppCompatActivity {
 
     private String value;
-    Realm backgroundThreadRealm;
     public String registration_number;
 
     @Override

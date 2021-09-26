@@ -87,6 +87,8 @@ public class MyApplication extends Application  {
         super.onCreate();
         Realm.init(this);
 
+
+
     }
 
 }

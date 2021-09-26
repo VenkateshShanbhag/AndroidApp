@@ -96,7 +96,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         refresh.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                backgroundThreadRealm.close();
+                //backgroundThreadRealm.close();
                 refreshPage();
             }
         });
@@ -105,7 +105,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         home.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                backgroundThreadRealm.close();
+                //backgroundThreadRealm.close();
                 openHomePage();
             }
         });
@@ -188,6 +188,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
                     System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
                 });
             }
+            backgroundThreadRealm.close();
         } catch (Exception e){
             System.out.println("EXCEPTION: "+e);
         }
@@ -295,7 +296,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
 
     @Override
     public void onBackPressed() {
-        backgroundThreadRealm.close();
+        //backgroundThreadRealm.close();
         Intent intent = new Intent(this, MainActivity.class);
         Log.v("INFO>>","The Add vehicle activity started");
         startActivity(intent);

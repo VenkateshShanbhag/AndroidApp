@@ -107,7 +107,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         home.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                backgroundThreadRealm.close();
                 openHomePage();
             }
         });
@@ -241,6 +240,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void openHomePage() {
+        backgroundThreadRealm.close();
         Intent intent = new Intent(this, MainActivity.class);
         Log.v("INFO>>","The Add vehicle activity started");
         startActivity(intent);
