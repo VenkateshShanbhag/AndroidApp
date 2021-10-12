@@ -75,30 +75,13 @@ Prerequisites for building the run and build the apk.
 
         // This function is the webhook's request handler.
          exports = function(payload, response) {
-             const body = payload.body;
-             console.log(payload.body);
-             const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").find(payload.query);
-             return  doc;
-         };
-
-    Function 2 : GetLatestLocation : Returns latest location of all vehicles.
-
-        // This function is the webhook's request handler.
-          exports = function(payload, response) {
-              const query = [
-                {"$sort":{"Timestamp": -1}},
-                {"$group":{
-                  "_id":"$reg_num",
-                  "reg_num":{"$first":"$reg_num"},
-                  "Timestamp":{"$first":"$Timestamp"},
-                  "lat":{"$first":"$lat"},
-                  "lon":{"$first":"$lon"}
-                  }
-                },
-                {"$project":{"_id":0}}];
-              const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").aggregate(query);
-          return  doc;
-          };
+                const body = payload.query.reg_num;
+                const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").find({
+                "Timestamp" : { "$lt": new Date(), "$gte": new Date(new Date().setDate(new Date().getDate()-1))},
+                "reg_num": body
+            });
+            return  doc;
+            }
 
 
         Copy the webhook URLs to MyApplication class to their respective delarations.
@@ -106,7 +89,7 @@ Prerequisites for building the run and build the apk.
 
    * ##### Triggers for database collection update:
         Create a trigger function to listen to the database change event. Function is configured to send push notifications to the application on change event on TrackingGeospatial collection.
-
+     
              exports = function(changeEvent) {
                const { updateDescription, fullDocument } = changeEvent;
              
@@ -120,11 +103,7 @@ Prerequisites for building the run and build the apk.
                  "body":String(doc)
                }
                });
-               // const collection = context.services.get("mongodb-atlas").db("vehicle").collection("GeofenceViolation");
-               // delete fullDocument['_id'];
-               // collection.insertOne(fullDocument);
                return doc;
-             
              };
 
 
@@ -208,3 +187,22 @@ The following use case uses MongoDB Atlas resources and Confluent Cloud that may
 5. [MongoDB Trigger](https://docs.mongodb.com/realm/triggers/database-triggers/)
 6. [Time series collection](https://docs.mongodb.com/manual/core/timeseries-collections/)
 7. [Geospatial queries](https://docs.mongodb.com/manual/geospatial-queries/)
+
+
+create stream iiot_simulated_v2
+(
+"reg_num" varchar,
+"owner" varchar,
+"city" varchar,
+"lon" double,
+"lat" double,
+Timestamp varchar
+) WITH (KAFKA_TOPIC='iiot.simulated',
+VALUE_FORMAT='JSON'
+);
+
+
+create stream s3 as select STRINGTODATE(Timestamp, 'yyyy-MM-dd''T''HH:mm:ss.SSSX') as "Timestamp", "city", "owner", "reg_num", struct("type":='Point', "coordinates":=array["lat", "lon"]) as "location", struct("partition_key":='security') from  iiot_simulated_v2 emit changes;
+
+
+

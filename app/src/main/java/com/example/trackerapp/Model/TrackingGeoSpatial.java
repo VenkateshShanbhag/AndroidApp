@@ -1,7 +1,5 @@
 package com.example.trackerapp.Model;
 
-import com.example.trackerapp.Model.TrackingGeoSpatial_location;
-
 import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 

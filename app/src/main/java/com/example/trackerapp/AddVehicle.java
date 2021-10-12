@@ -59,13 +59,13 @@ public class AddVehicle extends AppCompatActivity {
                 location.setType("Point");
 
                 /* Tracking object */
-                tracking_data.setTimestamp(new Date());
-                tracking_data.setReg_num(registration_num.toUpperCase());
                 tracking_data.setPartition_key("security");
                 tracking_data.setLocation(location);
                 tracking_data.set_id(new ObjectId());
                 tracking_data.setCity(city_of_reg);
                 tracking_data.setOwner(owner_name);
+                tracking_data.setReg_num(registration_num);
+                tracking_data.setTimestamp(new Date());
                 showCustomDialog();
                 Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);
