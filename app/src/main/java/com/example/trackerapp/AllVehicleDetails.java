@@ -20,12 +20,10 @@ import java.util.List;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
-import io.realm.mongodb.App;
 
 
 public class AllVehicleDetails extends AppCompatActivity implements AdapterView.OnItemClickListener {
     String Appid;
-    private App app;
     public Realm realm;
     Button home;
     Realm backgroundThreadRealm;
@@ -61,8 +59,9 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
             @Override
             public void execute(@NonNull Realm realm) {
                 results = realm.where(TrackingGeoSpatial.class).findAll();
-                List<String> vehicles=new ArrayList<String>();
+                List<String> vehicles= new ArrayList<>();
                 for (int i = 0; i < results.size(); i++) {
+                    assert results.get(i) != null;
                     vehicles.add(results.get(i).toString());
                 }
                 renderListActivity(vehicles);
@@ -75,7 +74,7 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
             public void onChange(RealmResults<TrackingGeoSpatial> trackingGeoSpatials) {
 
                 System.out.println("***************** HERE *****************"+ trackingGeoSpatials);
-                List<String> vehicles=new ArrayList<String>();
+                List<String> vehicles= new ArrayList<>();
                 for (int i = 0; i < results.size(); i++) {
                     vehicles.add(results.get(i).toString());
                 }
@@ -87,8 +86,8 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
 
     public void renderListActivity(List<String> vehicles) {
         System.out.println("!!!!!!!!!!!!!!!>>>>>>>>>>>>>>>>>>>>"+vehicles);
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, vehicles);
-        ListView listView = (ListView) findViewById(R.id.lvVehicle);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, vehicles);
+        ListView listView = findViewById(R.id.lvVehicle);
         listView.setAdapter(arrayAdapter);
         listView.setOnItemClickListener(this);
     }

@@ -3,19 +3,20 @@ import json
 from math import cos, sin, atan2, sqrt, radians, degrees, asin, modf
 import datetime
 import time
-from confluent_kafka import Producer, KafkaError
-from threading import Thread
-from multiprocessing import Process
+from confluent_kafka import Producer
 import ccloud_lib
+topic = ""
 
 vehicle_details = [
     {
         "reg_num": "KA1234",
-        "lat_start": 14.241637,
-        "lat_end": 14.24555,
-        "lon_start": 74.38445,
-        "lon_end": 74.35555,
-        "orientation": 45
+        "lat_start": 12.8716,
+        "lat_end": 12.9737,
+        "lon_start": 77.5946,
+        "lon_end": 77.7248,
+        "orientation": 90,
+        "owner": "Venkatesh",
+        "city": "Bengalore"
     }
     # ,
     # {
@@ -38,8 +39,7 @@ vehicle_details = [
 
 
 def get_path_length(lat1, lng1, lat2, lng2):
-    ''' calculates the distance between two lat, long coordinate pairs '''
-    r = 6371000  # radius of earth in m
+    r = 6371000
     lat1rads = radians(lat1)
     lat2rads = radians(lat2)
     deltaLat = radians((lat2 - lat1))
@@ -51,19 +51,17 @@ def get_path_length(lat1, lng1, lat2, lng2):
 
 
 def get_destination_lat_lon(lat, lng, orientation, distance):
-    ''' returns the lat an long of destination point
-    given the start lat, long, aziuth, and distance '''
-    R = 6378.1  # Radius of the Earth in km
-    brng = radians(orientation)  # Bearing is degrees converted to radians.
-    d = distance / 100  # Distance m converted to km
+    earth_radius = 6378.1
+    brng = radians(orientation)
+    d = distance / 100
 
     lat1 = radians(lat)  # Current dd lat point converted to radians
     lon1 = radians(lng)  # Current dd long point converted to radians
 
-    lat2 = asin(sin(lat1) * cos(d / R) + cos(lat1) * sin(d / R) * cos(brng))
+    lat2 = asin(sin(lat1) * cos(d / earth_radius) + cos(lat1) * sin(d / earth_radius) * cos(brng))
 
-    lon2 = lon1 + atan2(sin(brng) * sin(d / R) * cos(lat1),
-                        cos(d / R) - sin(lat1) * sin(lat2))
+    lon2 = lon1 + atan2(sin(brng) * sin(d / earth_radius) * cos(lat1),
+                        cos(d / earth_radius) - sin(lat1) * sin(lat2))
 
     # convert back to degrees
     lat2 = degrees(lat2)
@@ -73,10 +71,10 @@ def get_destination_lat_lon(lat, lng, orientation, distance):
 
 
 def produce_data(data):
-    topic = "iiot_tracking"
     record_value = json.dumps(data)
     print("Producing record: {}\t{}".format("timeseries data", record_value))
-    time.sleep(2)
+    time.sleep(0)
+    print(topic)
     producer.produce(topic, key="timeseries data", value=record_value, on_delivery=ack)
     # p.poll() serves delivery reports (on_delivery)
     # from previous produce() calls.
@@ -85,7 +83,7 @@ def produce_data(data):
     print("{} messages were produced to topic {}!".format(delivered_records, topic))
 
 
-def get_coordinates(interval, orientation, lat1, lng1, lat2, lng2, reg_num):
+def get_coordinates(interval, orientation, lat1, lng1, lat2, lng2, reg_num, city, owner):
     '''returns every coordinate pair inbetween two coordinate 
     pairs given the desired interval '''
     coordinates = []
@@ -98,7 +96,7 @@ def get_coordinates(interval, orientation, lat1, lng1, lat2, lng2, reg_num):
         c = get_destination_lat_lon(lat1, lng1, orientation, counter)
         counter += 1.0
         real_time_data_json = {"reg_num": reg_num, "Timestamp": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                               "lat": c[0], "lon": c[1]}
+                               "lat": c[0], "lon": c[1], "partition_key":"security", "city": city, "owner": owner}
         print(real_time_data_json)
         produce_data(real_time_data_json)
         coordinates_final.append(real_time_data_json)
@@ -121,17 +119,17 @@ def generate_data():
         # end point
         lat2 = vehicle["lat_end"]
         lng2 = vehicle["lon_end"]
-        get_coordinates(interval, orientation, lat1, lng1, lat2, lng2, vehicle["reg_num"])
-        # thread = Thread(target=, args=())
-        # thread.start()
-        # thread.join()
-        # coordinates = get_coordinates(interval, orientation, lat1, lng1, lat2, lng2, vehicle["reg_num"])
+        city = vehicle["city"]
+        owner = vehicle["owner"]
+        get_coordinates(interval, orientation, lat1, lng1, lat2, lng2, vehicle["reg_num"],city,owner)
 
 
 if __name__ == '__main__':
 
     args = ccloud_lib.parse_args()
     config_file = args.config_file
+    topic = args.topic
+    print(topic)
     conf = ccloud_lib.read_ccloud_config(config_file)
     producer_conf = ccloud_lib.pop_schema_registry_params_from_config(conf)
     producer = Producer(producer_conf)

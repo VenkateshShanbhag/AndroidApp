@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Context;
 import android.content.Intent;
@@ -34,16 +33,13 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import io.realm.Realm;
@@ -60,14 +56,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String value;
     Button refresh;
     Button home;
-    List<String> latList = new ArrayList<String>();
-    List<String> lonList = new ArrayList<String>();
-    List<LatLng> latlonList = new ArrayList<LatLng>();
-    int vehicleTimeline = 0;
+    List<String> latList = new ArrayList<>();
+    List<String> lonList = new ArrayList<>();
+    List<LatLng> latlonList = new ArrayList<>();
     MyApplication dbConfigs = new MyApplication();
     Realm backgroundThreadRealm;
-    App app;
-    public List<TrackingGeoSpatial> tracking_data = new ArrayList<TrackingGeoSpatial>();
+    public List<TrackingGeoSpatial> tracking_data = new ArrayList<>();
     SupportMapFragment mapFragment;
     String timeline_url;
 
@@ -93,6 +87,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        assert mapFragment != null;
         mapFragment.getMapAsync(this);
 
         refresh = findViewById(R.id.refresh);
@@ -114,9 +109,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private void refreshPage() {
-//        final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-//        ft.detach(mapFragment);
-//        ft.attach(mapFragment);
         backgroundThreadRealm.close();
         Intent intent = getIntent();
         intent.putExtra("key", value);
@@ -129,7 +121,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             // Timeline data
             URL url = new URL(timeline_url+registration_number[1].toUpperCase());
-            String readLine = null;
+            String readLine;
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             int responseCode = connection.getResponseCode();
@@ -181,7 +173,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         marker.icon(bitmapDescriptorFromVector(this, R.mipmap.car_icon_03));
         mMap.addMarker(marker);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(custom));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(18));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(12));
 
         googleMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
@@ -193,6 +185,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectorResId) {
         Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
+        assert vectorDrawable != null;
         vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
         Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
@@ -212,11 +205,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             tracking_data.add(results);
         });
 
-//        for (int i = 0; i < tracking_data.size(); i++) {
-//            Double lat = tracking_data.get(i).getLat();
-//            Double lon = tracking_data.get(i).getLon();
-//        }
-
         backgroundThreadRealm.close();
         //before inflating the custom alert dialog layout, we will get the current activity viewgroup
         ViewGroup viewGroup = findViewById(android.R.id.content);
@@ -226,7 +214,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //Now we need an AlertDialog.Builder object
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        TextView textView = (TextView) findViewById(R.id.display_msg);
+        TextView textView = findViewById(R.id.display_msg);
 
         // TODO: Set the timeline data for the registration number
         textView.setText("");

@@ -9,33 +9,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.example.trackerapp.Model.TrackingGeoSpatial;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.realm.Realm;
-import io.realm.RealmChangeListener;
-import io.realm.RealmResults;
 
 public class MainActivity extends AppCompatActivity  {
     Button allVehicles;
     Button addVehicle;
     Button trackAllVehicles;
     public Realm realm;
-    Realm backgroundThreadRealm;
-    MyApplication dbConfigs;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-//        dbConfigs = new MyApplication();
-//        backgroundThreadRealm = dbConfigs.getAppConfigs();
-////        RealmResults<TrackingGeoSpatial> tracking = backgroundThreadRealm.where(TrackingGeoSpatial.class).findAll();
-//        backgroundThreadRealm.close();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();

@@ -29,25 +29,13 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.bson.types.ObjectId;
-import org.json.JSONArray;
-import org.json.JSONObject;
-//
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
-import io.realm.RealmList;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
@@ -63,10 +51,6 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     Button refresh;
     Button home;
     Button vehicle_list;
-    List<String> latList = new ArrayList<String>();
-    List<String> lonList = new ArrayList<String>();
-    List<String> regNumList = new ArrayList<String>();
-    List<String> timestampList = new ArrayList<String>();
     TrackingGeoSpatial tracking=null;
     boolean inCircle;
     MyApplication dbConfigs;
@@ -87,8 +71,6 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map2);
         mapFragment.getMapAsync(this);
-
-
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -124,7 +106,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(@NonNull Realm realm) {
-                results = realm.where(TrackingGeoSpatial.class).sort("Timestamp", Sort.DESCENDING).distinct("reg_num").findAll();
+                results = realm.where(TrackingGeoSpatial.class).sort("_modifiedTS", Sort.DESCENDING).distinct("_id").findAll();
                 tracking_data.add(results);
                 System.out.println("***************** HERE *****************"+tracking_data);
                 mMap.clear();
@@ -149,7 +131,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         for (int i = 0; i < tracking_data.get(0).size(); i++) {
             lat = tracking_data.get(0).get(i).getLocation().getCoordinates().get(0);
             lon = tracking_data.get(0).get(i).getLocation().getCoordinates().get(1);
-            reg_num = tracking_data.get(0).get(i).getReg_num();
+            reg_num = tracking_data.get(0).get(i).get_id();
             // Add a marker in Sydney and move the camera
             LatLng custom = new LatLng(lat, lon);
             MarkerOptions marker = new MarkerOptions().position(custom).title(reg_num + "\n " + lat + " " + lon);
@@ -159,7 +141,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         }
         addCircle(new LatLng(dbConfigs.getStatic_lat(),dbConfigs.getStatic_lon()), 10000f);
         filterMarkers(20000f);
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(10));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(13));
     }
 
 
@@ -180,7 +162,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         for (int i = 0; i < tracking_data.get(0).size(); i++) {
             double lat = tracking_data.get(0).get(i).getLocation().getCoordinates().get(0);
             double lon = tracking_data.get(0).get(i).getLocation().getCoordinates().get(1);
-            String reg_num_1 = tracking_data.get(0).get(i).getReg_num();
+            String reg_num_1 = tracking_data.get(0).get(i).get_id();
             Location.distanceBetween(lat,lon, dbConfigs.getStatic_lat(),dbConfigs.getStatic_lon()
                     , distance);
 
