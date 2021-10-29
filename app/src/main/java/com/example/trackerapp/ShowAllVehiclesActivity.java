@@ -3,6 +3,7 @@ package com.example.trackerapp;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Context;
 import android.content.Intent;
@@ -30,21 +31,11 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.bson.types.ObjectId;
-import org.json.JSONArray;
-import org.json.JSONObject;
-//
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
-import io.realm.RealmList;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
@@ -53,7 +44,6 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     private GoogleMap mMap;
     private ActivityShowAllVehiclesBinding binding;
     String Appid;
-    public List<RealmResults<TrackingGeoSpatial>> tracking_data = new ArrayList<RealmResults<TrackingGeoSpatial>>();
     double lat;
     double lon;
     String reg_num;
@@ -61,15 +51,11 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     Button refresh;
     Button home;
     Button vehicle_list;
-    List<String> latList = new ArrayList<String>();
-    List<String> lonList = new ArrayList<String>();
-    List<String> regNumList = new ArrayList<String>();
-    String partitionKey;
-    List<String> timestampList = new ArrayList<String>();
     TrackingGeoSpatial tracking=null;
     boolean inCircle;
     MyApplication dbConfigs;
-    String latest_location;
+    private RealmResults<TrackingGeoSpatial> results;
+    List<RealmResults<TrackingGeoSpatial>> tracking_data = new ArrayList<RealmResults<TrackingGeoSpatial>>();
 
 
     @Override
@@ -77,29 +63,19 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         dbConfigs = new MyApplication();
         backgroundThreadRealm = dbConfigs.getAppConfigs();
         Appid = dbConfigs.getAppid();
-        latest_location = dbConfigs.getLatest_location();
 
         super.onCreate(savedInstanceState);
 
-        syncLatestLatLon();
-        readRealmData();
-
         binding = ActivityShowAllVehiclesBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map2);
         mapFragment.getMapAsync(this);
 
-        refresh = findViewById(R.id.refresh2);
-        refresh.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                backgroundThreadRealm.close();
-                refreshPage();
-            }
-        });
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
+
 
         home = findViewById(R.id.home);
         home.setOnClickListener(new View.OnClickListener() {
@@ -114,102 +90,8 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         vehicle_list.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //backgroundThreadRealm.close();
+                backgroundThreadRealm.close();
                 showVehicleList();
-            }
-        });
-    }
-
-
-    private void syncLatestLatLon(){
-        try {
-            URL url = new URL(latest_location);
-            String readLine;
-            HttpURLConnection conection = (HttpURLConnection) url.openConnection();
-            conection.setRequestMethod("GET");
-            int responseCode = conection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(conection.getInputStream()));
-                ArrayList<String> response = new ArrayList<>();
-                while ((readLine = in.readLine()) != null) {
-                    response.add(readLine);
-                }
-                in.close();
-                // TODO: Parse the result and display in maps
-                JSONArray response_json_array = new JSONArray(response.get(0));
-                System.out.println("JSON String Result " + response_json_array.get(0));
-
-                for(int i = 0; i<response_json_array.length(); i++){
-                    String lat = response_json_array.getJSONObject(i).optString("lat");
-                    JSONObject lat_json = new JSONObject(lat);
-                    latList.add((String) lat_json.get("$numberDouble"));
-
-                    String lon = response_json_array.getJSONObject(i).optString("lon");
-                    JSONObject lon_json = new JSONObject(lon);
-                    lonList.add((String) lon_json.get("$numberDouble"));
-
-                    String reg_num = response_json_array.getJSONObject(i).optString("reg_num");
-                    regNumList.add( reg_num);
-
-                    String timestamp = response_json_array.getJSONObject(i).optString("Timestamp");
-                    JSONObject timestamp_json = new JSONObject(timestamp);
-                    JSONObject timestamp_long = new JSONObject(timestamp_json.get("$date").toString());
-
-                    timestampList.add((String)timestamp_long.get("$numberLong"));
-                }
-                backgroundThreadRealm.executeTransaction(transactionRealm -> {
-                    System.out.println(latList);
-                    for(int i=0; i< latList.size(); i++){
-                        double lat1 = Double.parseDouble(latList.get(i));
-                        double lon1 = Double.parseDouble(lonList.get(i));
-                        long timestamp = Long.parseLong(timestampList.get(i));
-                        Date date = new Date(timestamp);
-                        String reg_num = regNumList.get(i);
-                        System.out.println("REG_NUM !!!!!!"+ reg_num);
-                        tracking = transactionRealm.where(TrackingGeoSpatial.class).equalTo("reg_num",reg_num).findFirst();
-                        if(tracking == null) {
-                            tracking = new TrackingGeoSpatial();  // or realm.createObject(Person.class, id);
-                            tracking.set_id(new ObjectId());
-                            tracking.setTimestamp(date);
-                            tracking.setPartition_key("security");
-                            tracking.setReg_num(reg_num);
-                            TrackingGeoSpatial_location tracking_location = new TrackingGeoSpatial_location();
-                            RealmList<Double> latlonlist = new RealmList<>();
-                            latlonlist.add(lat1);
-                            latlonlist.add(lon1);
-                            tracking_location.setCoordinates(latlonlist);
-                            tracking_location.setType("Point");
-
-                            tracking.setLocation(tracking_location);
-                        }
-                        transactionRealm.insertOrUpdate(tracking);
-                    }
-                    System.out.println("Instered successfully !!!!!!!!!!!!!!!!!!!!");
-                });
-            }
-        } catch (Exception e){
-            System.out.println("EXCEPTION: "+e);
-        }
-    }
-
-    /* Sync data from Atlas to Realm db */
-    //TODO: The query should read all the files. as the timeseries data is synced directly into Tracking data in updateLatestLatLon method
-    public void readRealmData(){
-        backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
-            @Override
-            public void execute(@NonNull Realm realm) {
-                // ... do something with the updates (UI, etc.) ...
-                RealmChangeListener<Realm> realmListener = new RealmChangeListener<Realm>() {
-                    @Override
-                    public void onChange(Realm realm) {
-                        RealmResults<TrackingGeoSpatial> results =
-                                realm.where(TrackingGeoSpatial.class).sort("Timestamp", Sort.DESCENDING).distinct("reg_num").findAll();
-
-                        tracking_data.add(results);
-                    }
-                };
-                realm.addChangeListener(realmListener);
             }
         });
     }
@@ -220,10 +102,36 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         mMap = googleMap;
         mMap.clear();
 
+
+        backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(@NonNull Realm realm) {
+                results = realm.where(TrackingGeoSpatial.class).sort("_modifiedTS", Sort.DESCENDING).distinct("_id").findAll();
+                tracking_data.add(results);
+                System.out.println("***************** HERE *****************"+tracking_data);
+                mMap.clear();
+                set_coordinates();
+            }
+        });
+
+        results.addChangeListener(new RealmChangeListener<RealmResults<TrackingGeoSpatial>>() {
+            @Override
+            public void onChange(RealmResults<TrackingGeoSpatial> trackingGeoSpatials) {
+                tracking_data = new ArrayList<RealmResults<TrackingGeoSpatial>>();
+                System.out.println("***************** HERE *****************"+ results);
+                tracking_data.add(trackingGeoSpatials);
+                mMap.clear();
+                set_coordinates();
+
+            }
+        });
+    }
+
+    public  void set_coordinates() {
         for (int i = 0; i < tracking_data.get(0).size(); i++) {
             lat = tracking_data.get(0).get(i).getLocation().getCoordinates().get(0);
             lon = tracking_data.get(0).get(i).getLocation().getCoordinates().get(1);
-            reg_num = tracking_data.get(0).get(i).getReg_num();
+            reg_num = tracking_data.get(0).get(i).get_id();
             // Add a marker in Sydney and move the camera
             LatLng custom = new LatLng(lat, lon);
             MarkerOptions marker = new MarkerOptions().position(custom).title(reg_num + "\n " + lat + " " + lon);
@@ -231,10 +139,9 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
             mMap.addMarker(marker).showInfoWindow();
             mMap.moveCamera(CameraUpdateFactory.newLatLng(custom));
         }
-        // addGeofence(new LatLng(14.24166, 74.448394), 10000f);
         addCircle(new LatLng(dbConfigs.getStatic_lat(),dbConfigs.getStatic_lon()), 10000f);
         filterMarkers(20000f);
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(10));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(13));
     }
 
 
@@ -255,7 +162,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         for (int i = 0; i < tracking_data.get(0).size(); i++) {
             double lat = tracking_data.get(0).get(i).getLocation().getCoordinates().get(0);
             double lon = tracking_data.get(0).get(i).getLocation().getCoordinates().get(1);
-            String reg_num_1 = tracking_data.get(0).get(i).getReg_num();
+            String reg_num_1 = tracking_data.get(0).get(i).get_id();
             Location.distanceBetween(lat,lon, dbConfigs.getStatic_lat(),dbConfigs.getStatic_lon()
                     , distance);
 
@@ -284,12 +191,6 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
     private void openHomePage() {
         Intent intent = new Intent(this, MainActivity.class);
         Log.v("INFO>>","The Add vehicle activity started");
-        startActivity(intent);
-    }
-
-    private void refreshPage() {
-        Intent intent = getIntent();
-        finish();
         startActivity(intent);
     }
 

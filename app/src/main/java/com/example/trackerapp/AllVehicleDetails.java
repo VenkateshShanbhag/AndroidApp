@@ -18,17 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
-import io.realm.mongodb.App;
 
 
 public class AllVehicleDetails extends AppCompatActivity implements AdapterView.OnItemClickListener {
     String Appid;
-    private App app;
     public Realm realm;
-    public List<String> vehicles=new ArrayList<String>();
     Button home;
     Realm backgroundThreadRealm;
+    private RealmResults<TrackingGeoSpatial> results;
 
 
     @Override
@@ -59,28 +58,43 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
         backgroundThreadRealm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(@NonNull Realm realm) {
-                RealmResults<TrackingGeoSpatial> results = realm.where(TrackingGeoSpatial.class).findAll();
+                results = realm.where(TrackingGeoSpatial.class).findAll();
+                List<String> vehicles= new ArrayList<>();
+                for (int i = 0; i < results.size(); i++) {
+                    assert results.get(i) != null;
+                    vehicles.add(results.get(i).toString());
+                }
+                renderListActivity(vehicles);
+            }
+
+        });
+
+        results.addChangeListener(new RealmChangeListener<RealmResults<TrackingGeoSpatial>>() {
+            @Override
+            public void onChange(RealmResults<TrackingGeoSpatial> trackingGeoSpatials) {
+
+                System.out.println("***************** HERE *****************"+ trackingGeoSpatials);
+                List<String> vehicles= new ArrayList<>();
                 for (int i = 0; i < results.size(); i++) {
                     vehicles.add(results.get(i).toString());
                 }
+                renderListActivity(vehicles);
+
             }
         });
-        renderListActivity(vehicles);
-
-        backgroundThreadRealm.close();
     }
 
-    public void renderListActivity(List<String> vehicles){
+    public void renderListActivity(List<String> vehicles) {
         System.out.println("!!!!!!!!!!!!!!!>>>>>>>>>>>>>>>>>>>>"+vehicles);
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, vehicles);
-        ListView listView = (ListView) findViewById(R.id.lvVehicle);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, vehicles);
+        ListView listView = findViewById(R.id.lvVehicle);
         listView.setAdapter(arrayAdapter);
         listView.setOnItemClickListener(this);
-
     }
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+        backgroundThreadRealm.close();
         System.out.println(">>>>>>>> INside ADaptor view");
         String vehicle_data = adapterView.getItemAtPosition(pos).toString();
         System.out.println(vehicle_data);
@@ -90,6 +104,7 @@ public class AllVehicleDetails extends AppCompatActivity implements AdapterView.
     }
 
     private void openHomePage() {
+        backgroundThreadRealm.close();
         Intent intent = new Intent(this, MainActivity.class);
         Log.v("INFO>>","The Add vehicle activity started");
         startActivity(intent);

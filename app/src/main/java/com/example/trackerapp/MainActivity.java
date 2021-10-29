@@ -8,12 +8,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-import com.google.android.gms.maps.model.LatLng;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.realm.Realm;
 
@@ -22,15 +20,11 @@ public class MainActivity extends AppCompatActivity  {
     Button addVehicle;
     Button trackAllVehicles;
     public Realm realm;
-    private int networkFlag=0;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-        System.out.println("!!!!!!! NETWORK STATUS - !!!!!!!! - "+networkFlag);
         setContentView(R.layout.activity_main);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);

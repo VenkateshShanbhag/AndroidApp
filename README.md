@@ -10,122 +10,105 @@ Prerequisites for building the run and build the apk.
 
     1. Android Studio.
     2. Mongodb Atlas cluster with mongodb version 5.0 or higher.
-    3. Firebase Account. (for Alerts and Push notifications).
-    4. GCP cloud credentials for maps service and firebase service.
+    3. Configure Realm.
+    4. Configure Confluent cloud.
+    5. Firebase Account. (for Alerts and Push notifications).
+    6. GCP cloud credentials for maps service and firebase service.
 
 
-1. Install android studio:
-   Download and Install android studio from [here](https://developer.android.com/studio). Clone the repository and open the IoT/AndroidApp in android studio. Sync all the gradle dependencies.
+### 1. Install android studio:
+Download and Install android studio from [here](https://developer.android.com/studio). Clone the repository and open the IoT/AndroidApp in android studio. Sync all the gradle dependencies. Download this repo and open with android studio.
 
-2. Configure MongoDB Atlas:
-   Create collections in vehicle database:
-  1. TrackingGeospatial: Holds the data of current location of tracked users also the details of users such as city, name etc.
-  2. tracking-historic (Time series collection) - Live / Stimulated data is loaded to this collection. The data is generated from python script << git location >> and loaded using confluent connector for MongoDB Atlas.
+### 2. Configure MongoDB Atlas:
 
-3. #### Configure Realm:
-   We need following preconfigured in realm application to run the android application.
-  * ##### Realm schema for TrackingGeospatial.
-    TrackingGeospatial schema:
+Follow below steps to setup atlas cluster and collections:
+* Set up an [Atlas](https://www.mongodb.com/atlas) cluster or login into your cluster if you have it already. Please make sure you are running on **5.0** or higher version of Mongo on your cluster.
+* Create a database named vehicle in your cluster.
+* Create collection **TrackingGeospatial** which will hold the data of current location of tracked users also the details of users such as city, name etc. The data in this collection would be the latest data that we will sync with the mobile application.
+* **tracking-historic** (Time series collection) which will hold Live / Stimulated data. Time series capabolities are available on 5.0 and higher. The timestamp field name should be set as **Timestamp**.
 
-        {
-           "title": "TrackingGeoSpatial",
-           "bsonType": "object",
-           "properties": {
+### 3. Configure Realm:
+We need following preconfigured in realm application to run the android application. Create a realm application from realm tab of your Atlas UI and navigate to schema. Create a schema for the collection TrackingGeospatial.
+* ##### Realm schema for TrackingGeospatial.
+  TrackingGeospatial schema:
+  Create a realm application with following schema. Note: The "partition_key" can be set as per requirement depending upon use case please refer [here](https://docs.mongodb.com/realm/sync/partitions/). Verify the data model is generated for the schema by navigating to SDK on side pane of Realm UI.
+
+      {
+          "title": "TrackingGeoSpatial",
+          "bsonType": "object",
+          "required": ["_id"],
+          "properties": {
               "_id": {
-                 "bsonType": "objectId"
+                  "bsonType": "string"
               },
-              "Timestamp": {
-                 "bsonType": "date"
+              "_modifiedTS": {
+                  "bsonType": "date"
               },
               "location": {
-                 "bsonType": "object",
-                 "properties": {
-                    "coordinates": {
-                       "bsonType": "array",
-                       "items": {
-                          "bsonType": "double"
-                       }
-                    },
-                    "type": {
-                       "bsonType": "string"
-                    }
-                 }
+                  "bsonType": "object",
+                  "properties": {
+                      "coordinates": {
+                          "bsonType": "array",
+                          "items": {
+                              "bsonType": "double"
+                          }
+                      },
+                      "type": {
+                          "bsonType": "string"
+                      }
+                  }
               },
               "partition_key": {
-                 "bsonType": "string"
-              },
-              "reg_num": {
-                 "bsonType": "string"
+                  "bsonType": "string"
               },
               "city": {
-                 "bsonType": "string"
+                  "bsonType": "string"
               },
               "owner": {
-                 "bsonType": "string"
+                  "bsonType": "string"
               }
-           }
-        }  
+          }
+      }
 
-    Create a realm application with following schema. Note: The "partition_key" can be set as per requirement depending upon use case please refer [here](https://docs.mongodb.com/realm/sync/partitions/). Verify the data model is generated for the schema by navigating to SDK on side pane of Realm UI.
 
-  * ##### Webhooks :
-    Create webhooks to access the time series collection data and the tracking collection for displaying all vehicles.
 
-    Function 1: GetTimeline : Returns all coordinates for requested vehicle.
+* ##### Webhooks :
+  Create webhooks to access the time series collection data and the tracking collection for displaying all vehicles.
 
-        // This function is the webhook's request handler.
-         exports = function(payload, response) {
-             const body = payload.body;
-             console.log(payload.body);
-             const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").find(payload.query);
-             return  doc;
-         };
+  Function : GetTimeline : Returns all coordinates for requested vehicle for 1 hour.
 
-    Function 2 : GetLatestLocation : Returns latest location of all vehicles.
-
-        // This function is the webhook's request handler.
-          exports = function(payload, response) {
-              const query = [
-                {"$sort":{"Timestamp": -1}},
-                {"$group":{
-                  "_id":"$reg_num",
-                  "reg_num":{"$first":"$reg_num"},
-                  "Timestamp":{"$first":"$Timestamp"},
-                  "lat":{"$first":"$lat"},
-                  "lon":{"$first":"$lon"}
-                  }
-                },
-                {"$project":{"_id":0}}];
-              const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").aggregate(query);
+      // This function is the webhook's request handler.
+       exports = function(payload, response) {
+              const body = payload.query.reg_num;
+              const doc = context.services.get("mongodb-atlas").db("vehicle").collection("tracking-historic").find({
+              "Timestamp" : { "$lt": new Date(), "$gte": new Date(new Date().setDate(new Date().getDate()-1))},
+              "reg_num": body
+          });
           return  doc;
+          }
+
+
+      Copy the webhook URLs to the variable URL of MyApplication class delarations.
+
+
+* ##### Triggers for database collection update:
+  Create a trigger function to listen to the database change event. Function is configured to send push notifications to the application on change event on TrackingGeospatial collection.
+
+          exports = function(changeEvent) {
+            const { updateDescription, fullDocument } = changeEvent;
+          
+            const doc = context.services.get("mongodb-atlas").db("vehicle").collection("TrackingGeospatial").aggregate([
+            {"$geoNear": {"near": { "type": 'Point', "coordinates": [12.97182, 77.59499] },"distanceField": 'dist',"maxDistance": 5000}}
+            ]);
+            context.services.get("gcm").send({
+              "to": "/topics/GeofenceTrigger",
+              "notification":{
+              "title":"Alert!!",
+              "body":String(doc)
+            }
+            });
+            return doc;
           };
-
-
-        Copy the webhook URLs to MyApplication class to their respective delarations.
-
-
-   * ##### Triggers for database collection update:
-        Create a trigger function to listen to the database change event. Function is configured to send push notifications to the application on change event on TrackingGeospatial collection.
-
-             exports = function(changeEvent) {
-               const { updateDescription, fullDocument } = changeEvent;
-             
-               const doc = context.services.get("mongodb-atlas").db("vehicle").collection("TrackingGeospatial").aggregate([
-               {"$geoNear": {"near": { "type": 'Point', "coordinates": [12.97182, 77.59499] },"distanceField": 'dist',"maxDistance": 5000}}
-               ]);
-               context.services.get("gcm").send({
-                 "to": "/topics/GeofenceTrigger",
-                 "notification":{
-                 "title":"Alert!!",
-                 "body":String(doc)
-               }
-               });
-               // const collection = context.services.get("mongodb-atlas").db("vehicle").collection("GeofenceViolation");
-               // delete fullDocument['_id'];
-               // collection.insertOne(fullDocument);
-               return doc;
-             
-             };
 
 
 
@@ -141,44 +124,94 @@ Prerequisites for building the run and build the apk.
 
 Start the sync by navigating to sync on side pane from realm UI. Follow the [documentation](https://docs.mongodb.com/realm/sync/get-started/) for more details
 
-## Confluent Configuration
-Follow the instruction in [here](https://github.com/AskMeiPaaS/iiot-hybrid-with-mongodb-confluent) to create a topic and MongoDBAtlasSink connector.
+### 4. Confluent Configuration
+Follow the instruction in [here](https://github.com/AskMeiPaaS/iiot-hybrid-with-mongodb-confluent) to create a topic and MongoDBAtlasSink connector. Also the confluent cloud UI can be used to create the cluster, topic, connectors and run ksql queries.
 
-MongoDBAtlasSink connector configurations.
+* Create a topic named iot.data.
+
+* Create 2 MongoDBAtlasSink connectors with below configurations
+
+i. Create stream to modify the input data and pass to the topic. Navigate to confluent cloud, click on ksql and editor. Copy paste the below sql commands to create the streams. The topic iot.data should be present before we run the below commands.
 
 
-       {
-          "name": "MongoDbAtlasSinkConnector_0",
-          "config": {
-             "connector.class": "MongoDbAtlasSink",
-             "name": "MongoDbAtlasSinkConnector_0",
-             "input.data.format": "JSON",
-             "topics": "iiot_tracking",
-             "connection.host": <MongoDB host>,
-             "connection.user": <MongoDB username>,
-             "database": <MongoDB db name>,
-             "collection": <MongoAB collection name>",
-             "timeseries.timefield": "Timestamp",
-             "timeseries.timefield.auto.convert": "true",
-             "timeseries.timefield.auto.convert.date.format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
-             "tasks.max": "1"
-          }
-       }      
+    create stream stream01
+    (
+        "reg_num" varchar,
+        "owner" varchar,
+        "city" varchar,
+        "lon" double,
+        "lat" double,
+        "partition_key" varchar
+    ) WITH (KAFKA_TOPIC='iot.data',
+        VALUE_FORMAT='JSON'
+    );
+
+
+    create stream finalStream as select "city", "owner", "reg_num" as "_id", struct("type":='Point', "coordinates":=array["lat", "lon"]) as "location","partition_key" from  stream01 emit changes;
+
+
+
+ii. Time series connector configuration.
+
+
+            {
+                "name": "MongoDbAtlasSinkConnector_0",
+                "config": {
+                    "connector.class": "MongoDbAtlasSink",
+                    "name": "MongoDbAtlasSinkConnector_0",
+                    "input.data.format": "JSON",
+                    "topics": "iot.data",
+                    "connection.host": "iiotapp.2wqno.mongodb.net",
+                    "connection.user": "venkatesh",
+                    "database": "vehicle",
+                    "collection": "tracking-historic",
+                    "max.num.retries": "1",
+                    "timeseries.timefield": "Timestamp",
+                    "timeseries.timefield.auto.convert": "true",
+                    "timeseries.timefield.auto.convert.date.format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                    "tasks.max": "1"
+                }
+            }
+
+
+
+iii. Geospatial connector configuration.
+
+
+    {
+        "name": "MongoDbAtlasSinkConnector_1",
+        "config": {
+            "connector.class": "MongoDbAtlasSink",
+            "name": "MongoDbAtlasSinkConnector_1",
+            "input.data.format": "JSON",
+            "topics": "pksqlc-o2znjFINALSTREAM",
+            "connection.host": "iiotapp.2wqno.mongodb.net",
+            "connection.user": "venkatesh",
+            "database": "vehicle",
+            "collection": "TrackingGeospatial",
+            "write.strategy": "UpdateOneTimestampsStrategy",
+            "tasks.max": "1"
+        }
+    }      
 ##### Note:
 Create the atlas cluster and confluent cluster in same region. The sample payload to time series collection is shown below.
+
 
 #### Time series data format:
 The Timestamp field should be of string format.
 
-      {
-      "Timestamp": "2021-09-19T14:51:16.331Z",
-      "reg_num": "KA01A1111",
-      "lat": 12.97182,
-      "lon": 77.59499
-      }
+    {      
+      "city": "Bangalore",
+      "lat":12.9737,
+      "lon":77.6248,
+      "owner": "Peter",
+      "reg_num":"KA1111",
+      "partition_key":"security",
+      "Timestamp":"2021-10-13T12:25:45Z"
+    } 
 
 #### Geospatial data format:
-The users should be registered before sending data to time series collection. The documents from time series collection will be pulled into geospatial collection using http webhooks at time of loading "TRACK ALL" vehicle page.
+The data in geospatial collection will be loaded from confluent connector for geospatial collection. The input data in transformed into geospatial format using ksql queries shown in next step.
 
       {
          "partition_key": "security",
@@ -193,6 +226,9 @@ The users should be registered before sending data to time series collection. Th
       }
 
 "For this collection a 2d index need to be created on location field."
+
+
+
 
 ## Caution:
 

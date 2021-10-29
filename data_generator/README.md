@@ -8,7 +8,7 @@ Please refer for details on [Confluent Python Client for Apache Kafka](https://g
 
 2. Create a local file (for example, at $HOME/.confluent/librdkafka.config) with configuration parameters to connect to your Kafka cluster. Starting with one of the templates below, customize the file with connection information to your cluster. Substitute your values for {{ BROKER_ENDPOINT }}, {{CLUSTER_API_KEY }}, and {{ CLUSTER_API_SECRET }} (see Configure Confluent Cloud Clients for instructions on how to manually find these values, or use the ccloud-stack Utility for Confluent Cloud to automatically create them).
     
-    Template configuration file for Confluent Cloud
+    Template configuration file for Confluent Cloud.
 
 
     bootstrap.servers={{ BROKER_ENDPOINT }}
@@ -29,7 +29,6 @@ Please refer for details on [Confluent Python Client for Apache Kafka](https://g
 You can find the documentation and instructions for running this Python example at [https://docs.confluent.io/platform/current/tutorials/examples/clients/docs/python.html](https://docs.confluent.io/platform/current/tutorials/examples/clients/docs/python.html?utm_source=github&utm_medium=demo&utm_campaign=ch.examples_type.community_content.clients-ccloud)
 
 ### Schema samples
-{"timestamp":{"$date":"2021-08-09T01:24:43.000Z"},"reg_num":"Genetta genetta","lat":41.2860336,"lon":19.8905149}
-{"timestamp":{"$date":"2021-08-09T01:50:24.000Z"},"reg_num":"Lamprotornis nitens","lat":57.7197857,"lon":12.933356}
+{"timestamp":{"$date":"2021-08-09T01:24:43.000Z"},"reg_num":"KA111","lat":41.2860336,"lon":19.8905149, "owner": "Peter","city": "Bengalore"}
 
 

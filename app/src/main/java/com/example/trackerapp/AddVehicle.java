@@ -11,17 +11,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import com.example.trackerapp.Model.TrackingGeoSpatial_location;
 import com.example.trackerapp.Model.TrackingGeoSpatial;
-
-import org.bson.types.ObjectId;
 import java.util.Date;
 import io.realm.Realm;
 import io.realm.RealmList;
-import io.realm.mongodb.App;
 
 
 public class AddVehicle extends AppCompatActivity {
-    String Appid;
-    private App app;
     EditText name;
     EditText reg_num;
     EditText city;
@@ -33,7 +28,6 @@ public class AddVehicle extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         dbConfigs = new MyApplication();
-        app = dbConfigs.getApp();
         backgroundThreadRealm = dbConfigs.getAppConfigs();
         super.onCreate(savedInstanceState);
 
@@ -60,13 +54,13 @@ public class AddVehicle extends AppCompatActivity {
                 location.setType("Point");
 
                 /* Tracking object */
-                tracking_data.setTimestamp(new Date());
-                tracking_data.setReg_num(registration_num.toUpperCase());
                 tracking_data.setPartition_key("security");
                 tracking_data.setLocation(location);
-                tracking_data.set_id(new ObjectId());
+                tracking_data.set_id(registration_num);
                 tracking_data.setCity(city_of_reg);
                 tracking_data.setOwner(owner_name);
+                //tracking_data.setReg_num(registration_num);
+                tracking_data.set_modifiedTS(new Date());
                 showCustomDialog();
                 Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);
@@ -105,7 +99,6 @@ public class AddVehicle extends AppCompatActivity {
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
         alertDialog.closeOptionsMenu();
-
     }
 
     private void openHomePage() {

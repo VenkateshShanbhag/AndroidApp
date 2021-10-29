@@ -3,8 +3,6 @@ package com.example.trackerapp;
 import android.app.Application;
 import android.util.Log;
 
-import java.security.PublicKey;
-
 import io.realm.Realm;
 import io.realm.mongodb.App;
 import io.realm.mongodb.AppConfiguration;
@@ -20,7 +18,7 @@ public class MyApplication extends Application  {
     Double static_lon = 77.5946;
     App app;
     String timeline_url = "https://us-west-2.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-gmonu/service/GetTimeline/incoming_webhook/webhook0"+"?reg_num=";
-    String latest_location = "https://us-west-2.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-gmonu/service/GetLatestLocation/incoming_webhook/webhook0";
+    //String latest_location = "https://us-west-2.aws.webhooks.mongodb-realm.com/api/client/v2.0/app/application-0-gmonu/service/GetLatestLocation/incoming_webhook/webhook0";
     //Realm backgroundThreadRealm = getAppConfigs();
 
 
@@ -40,6 +38,7 @@ public class MyApplication extends Application  {
         User user = app.currentUser();
         app.login(Credentials.anonymous());
         String partitionValue = "security";
+        assert user != null;
         SyncConfiguration config = new SyncConfiguration.Builder(user, partitionValue)
                 .allowWritesOnUiThread(true)
                 .allowQueriesOnUiThread(true)
@@ -61,8 +60,6 @@ public class MyApplication extends Application  {
     }
 
     public String getTimeline_url() { return timeline_url; }
-
-    public String getLatest_location() { return latest_location; }
 
 
     public App getApp(){
@@ -86,6 +83,8 @@ public class MyApplication extends Application  {
     public void onCreate() {
         super.onCreate();
         Realm.init(this);
+
+
 
     }
 
