@@ -10,8 +10,10 @@ Prerequisites for building the run and build the apk.
 
     1. Android Studio.
     2. Mongodb Atlas cluster with mongodb version 5.0 or higher.
-    3. Firebase Account. (for Alerts and Push notifications).
-    4. GCP cloud credentials for maps service and firebase service.
+    3. Configure Realm.
+    4. Configure Confluent cloud.
+    5. Firebase Account. (for Alerts and Push notifications).
+    6. GCP cloud credentials for maps service and firebase service.
 
 
 ### 1. Install android studio:
@@ -20,7 +22,7 @@ Download and Install android studio from [here](https://developer.android.com/st
 ### 2. Configure MongoDB Atlas:
 
 Follow below steps to setup atlas cluster and collections:
-* Setup an [Atlas](https://www.mongodb.com/atlas) cluster or login into your cluster if you have it already. Please make sure you are running on **5.0** or higher version of Mongo on your cluster.
+* Set up an [Atlas](https://www.mongodb.com/atlas) cluster or login into your cluster if you have it already. Please make sure you are running on **5.0** or higher version of Mongo on your cluster.
 * Create a database named vehicle in your cluster.
 * Create collection **TrackingGeospatial** which will hold the data of current location of tracked users also the details of users such as city, name etc. The data in this collection would be the latest data that we will sync with the mobile application.
 * **tracking-historic** (Time series collection) which will hold Live / Stimulated data. Time series capabolities are available on 5.0 and higher. The timestamp field name should be set as **Timestamp**.
