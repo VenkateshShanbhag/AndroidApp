@@ -3,7 +3,7 @@
 # Confluent IIOT tracking App
 The Android application targets to utilize and demonstrate the power and features of MongoDB atlas available in latest release 5.0 .
 The android application has features such as time series collection, RealmDB, sync, triggers and push notifications.
-We have utilised time series collection hosted on mongodb managed atlas cluster as a sink for confluent connector to store the stream data for stimulation of moving vehicles. The stream can be generated using python script in data_generator folder.
+We have utilised time series collection hosted on mongodb managed atlas cluster as a sink for confluent connector to store the stream data for stimulation of moving vehicles. The stream can be generated using python script in [data_generator](https://github.com/VenkateshShanbhag/AndroidApp/tree/dev/data_generator) folder.
 
 ## Setup
 Prerequisites for building the run and build the apk.
