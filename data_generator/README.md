@@ -11,15 +11,22 @@ Please refer for details on [Confluent Python Client for Apache Kafka](https://g
     Template configuration file for Confluent Cloud.
 
 
-    bootstrap.servers={{ BROKER_ENDPOINT }}
-    security.protocol=SASL_SSL
-    sasl.mechanisms=PLAIN
-    sasl.username={{ CLUSTER_API_KEY }}
-    sasl.password={{ CLUSTER_API_SECRET }}
-   
+
+
+       bootstrap.servers={{ BROKER_ENDPOINT }}
+       security.protocol=SASL_SSL
+       sasl.mechanisms=PLAIN
+       sasl.username={{ CLUSTER_API_KEY }}
+       sasl.password={{ CLUSTER_API_SECRET }}
    
 
-3. Pass the <topic configured> for  configured topic on confluent cloud and run the Producer by running:
+3. Install requirements using pip3:
+
+   
+      pip3 install -r requirements.txt
+   
+
+4. Pass the <topic configured> for  configured topic on confluent cloud and run the Producer by running:
 
 
     python3 generate_stimulation_data.py   -f $HOME/.confluent/librdkafka.config -t <topic configured>
