@@ -141,7 +141,7 @@ public class ShowAllVehiclesActivity extends FragmentActivity implements OnMapRe
         }
         addCircle(new LatLng(dbConfigs.getStatic_lat(),dbConfigs.getStatic_lon()), 10000f);
         filterMarkers(20000f);
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(13));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
     }
 
 

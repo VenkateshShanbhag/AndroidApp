@@ -3,7 +3,7 @@
 # Confluent IIOT tracking App
 The Android application targets to utilize and demonstrate the power and features of MongoDB atlas available in latest release 5.0 .
 The android application has features such as time series collection, RealmDB, sync, triggers and push notifications.
-We have utilised time series collection hosted on mongodb managed atlas cluster as a sink for confluent connector to store the stream data for stimulation of moving vehicles. The stream can be generated using python script in [data_generator](https://github.com/VenkateshShanbhag/AndroidApp/tree/dev/data_generator) folder.
+We have utilised time series collection hosted on mongodb managed atlas cluster as a sink for confluent connector to store the stream data for stimulation of moving vehicles. The stream can be generated using python script in [data_generator](https://github.com/VenkateshShanbhag/AndroidApp/tree/dev/data_generator) folder. The Demo is w.r.t. static location for city of Bengaluru and can be updated as per your use case. 
 
 ## Setup
 Prerequisites for building the run and build the apk.
@@ -22,13 +22,13 @@ Download and Install android studio from [here](https://developer.android.com/st
 ### 2. Configure MongoDB Atlas:
 
 Follow below steps to setup atlas cluster and collections:
-* Set up an [Atlas](https://www.mongodb.com/atlas) cluster or login into your cluster if you have it already. Please make sure you are running on **5.0** or higher version of Mongo on your cluster.
+* Set up an [Atlas](https://www.mongodb.com/atlas) cluster or login into your cluster if you have it already. Please make sure you are running on **5.0** or higher version of Mongo on your cluster([setup instructions](https://docs.atlas.mongodb.com/tutorial/deploy-free-tier-cluster/)).
 * Create a database named vehicle in your cluster.
 * Create collection **TrackingGeospatial** which will hold the data of current location of tracked users also the details of users such as city, name etc. The data in this collection would be the latest data that we will sync with the mobile application.
-* **tracking-historic** (Time series collection) which will hold Live / Stimulated data. Time series capabolities are available on 5.0 and higher. The timestamp field name should be set as **Timestamp**.
+* **tracking-historic** (Time series collection) which will hold Live / Stimulated data. Time series capabilities are available on 5.0 and higher. The timestamp field name should be set as **Timestamp**.
 
 ### 3. Configure Realm:
-We need following preconfigured in realm application to run the android application. Create a realm application from realm tab of your Atlas UI and navigate to schema. Create a schema for the collection TrackingGeospatial.
+We need following preconfigured in realm application to run the android application. Create a [realm application](https://docs.mongodb.com/realm/manage-apps/create/create-with-realm-ui/) from realm tab of your Atlas UI and navigate to schema. Create a [schema](https://docs.mongodb.com/realm/sdk/android/#define-an-object-schema) for the collection TrackingGeospatial.
 * ##### Realm schema for TrackingGeospatial.
   TrackingGeospatial schema:
   Create a realm application with following schema. Note: The "partition_key" can be set as per requirement depending upon use case please refer [here](https://docs.mongodb.com/realm/sync/partitions/). Verify the data model is generated for the schema by navigating to SDK on side pane of Realm UI.
@@ -73,7 +73,7 @@ We need following preconfigured in realm application to run the android applicat
 
 
 * ##### Webhooks :
-  Create webhooks to access the time series collection data and the tracking collection for displaying all vehicles.
+  Create [webhooks](https://docs.mongodb.com/realm/services/) (Navigate to 3rd party services, Click on add service, click on </>HTTP) to access the time series collection data and the tracking collection for displaying all vehicles.
 
   Function : GetTimeline : Returns all coordinates for requested vehicle for 1 hour.
 
@@ -92,7 +92,7 @@ We need following preconfigured in realm application to run the android applicat
 
 
 * ##### Triggers for database collection update:
-  Create a trigger function to listen to the database change event. Function is configured to send push notifications to the application on change event on TrackingGeospatial collection.
+  Create a [trigger](https://docs.mongodb.com/realm/triggers/database-triggers/) function to listen to the database change event(Select operation type insert, update). Function is configured to send push notifications to the application on change event on TrackingGeospatial collection.
 
           exports = function(changeEvent) {
             const { updateDescription, fullDocument } = changeEvent;
@@ -116,20 +116,23 @@ We need following preconfigured in realm application to run the android applicat
   Copy the app id to appid variable in MyApplication class.
 
 * ##### GCP map token:
-  Create google API_KEY for accessing maps service and paste it in AndroidManifest.xml file.
+  Create google API_KEY (On GCP console, Navigate to APIs and Services, Click on credentials and create credentials ) for accessing maps service and paste it in AndroidManifest.xml file.
 
 * ##### Firebase Account for push notifications:
-  Create a Firebase account add the api and api_key to the push notification settings.
+  Create a [Firebase](https://console.firebase.google.com/?pli=1) account add the api and api_key to the push notification settings.
 
 
 Start the sync by navigating to sync on side pane from realm UI. Follow the [documentation](https://docs.mongodb.com/realm/sync/get-started/) for more details
 
 ### 4. Confluent Configuration
-Follow the instruction in [here](https://github.com/AskMeiPaaS/iiot-hybrid-with-mongodb-confluent) to create a topic and MongoDBAtlasSink connector. Also the confluent cloud UI can be used to create the cluster, topic, connectors and run ksql queries.
+Official [documentation](https://docs.confluent.io/cloud/current/overview.html) can be used to create the cluster, topic, connectors and run ksql queries or Follow the instruction in [here](https://github.com/AskMeiPaaS/iiot-hybrid-with-mongodb-confluent) to create a topic and MongoDBAtlasSink connector. Do remember to add the billing details for your confluent cloud 
+
+##### Note:
+Create the atlas cluster and confluent cluster in same region. The sample payload to time series collection is shown below.
 
 * Create a topic named iot.data.
 
-* Create 2 MongoDBAtlasSink connectors with below configurations
+* Create 2 MongoDBAtlasSink connectors with below configurations (Note: If using confluent UI, copy the value from below configurations)
 
 i. Create stream to modify the input data and pass to the topic. Navigate to confluent cloud, click on ksql and editor. Copy paste the below sql commands to create the streams. The topic iot.data should be present before we run the below commands.
 
@@ -192,9 +195,7 @@ iii. Geospatial connector configuration.
             "write.strategy": "UpdateOneTimestampsStrategy",
             "tasks.max": "1"
         }
-    }      
-##### Note:
-Create the atlas cluster and confluent cluster in same region. The sample payload to time series collection is shown below.
+    }
 
 
 #### Time series data format:
