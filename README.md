@@ -229,7 +229,7 @@ The data in geospatial collection will be loaded from confluent connector for ge
 "For this collection a 2d index need to be created on location field."
 
 
-Once the setup is done run the data generator code from [data_generator](https://github.com/AskMeiPaaS/iot-with-mongodb-and-confluent/tree/dev/data_generator)
+Once the setup is done run the data generator code from [data_generator](https://github.com/VenkateshShanbhag/AndroidAoo/tree/dev/data_generator)
 
 
 ## Caution:
