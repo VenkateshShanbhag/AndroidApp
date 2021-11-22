@@ -1,9 +1,9 @@
 
 
-# Confluent IIOT tracking App
-The Android application targets to utilize and demonstrate the power and features of MongoDB atlas available in latest release 5.0 .
-The android application has features such as time series collection, RealmDB, sync, triggers and push notifications.
-We have utilised time series collection hosted on mongodb managed atlas cluster as a sink for confluent connector to store the stream data for stimulation of moving vehicles. The stream can be generated using python script in [data_generator](https://github.com/VenkateshShanbhag/AndroidApp/tree/dev/data_generator) folder. The Demo is w.r.t. static location for city of Bengaluru and can be updated as per your use case. 
+# Fleet management using confluent and Atlas
+The Android application targets to utilize and demonstrate the power and features of MongoDB atlas and Confluent Cloud.
+The android application uses features such as time series collection, RealmDB, sync, triggers and push notifications from MongoDB atlas also uses KSQL and MongoDbAtlasSinkConnector from Confluent cloud to transform and load the data to MongoDB Atlas.
+We have utilised time series collection hosted on mongodb managed atlas cluster as a sink for confluent connector to store the stream data for stimulation of moving vehicles. The stream can be generated using python script in [data_generator](https://github.com/VenkateshShanbhag/AndroidApp/tree/dev/data_generator) folder. This Demo is w.r.t. static location for city of Bengaluru and can be updated as per your use case. 
 
 ## Setup
 Prerequisites for building the run and build the apk.
@@ -125,7 +125,7 @@ We need following preconfigured in realm application to run the android applicat
 Start the sync by navigating to sync on side pane from realm UI. Follow the [documentation](https://docs.mongodb.com/realm/sync/get-started/) for more details
 
 ### 4. Confluent Configuration
-Official [documentation](https://docs.confluent.io/cloud/current/overview.html) can be used to create the cluster, topic, connectors and run ksql queries or Follow the instruction in [here](https://github.com/AskMeiPaaS/iiot-hybrid-with-mongodb-confluent) to create a topic and MongoDBAtlasSink connector. Do remember to add the billing details for your confluent cloud 
+Official [documentation](https://docs.confluent.io/cloud/current/overview.html) can be used to create the cluster, topic, connectors and run ksql queries or Follow the instruction in [here](https://github.com/AskMeiPaaS/iiot-hybrid-with-mongodb-confluent) to create a topic and MongoDBAtlasSink connector.
 
 ##### Note:
 Create the atlas cluster and confluent cluster in same region. The sample payload to time series collection is shown below.
@@ -229,6 +229,7 @@ The data in geospatial collection will be loaded from confluent connector for ge
 "For this collection a 2d index need to be created on location field."
 
 
+Once the setup is done run the data generator code from [data_generator](https://github.com/AskMeiPaaS/iot-with-mongodb-and-confluent/tree/dev/data_generator)
 
 
 ## Caution:
